@@ -1,7 +1,7 @@
 {
-  "name":"兔子洞",
+  "name":"兔子洞｜全新独立版",
   "short_name":"兔子洞",
-  "description":"本地文件分类工具箱",
+  "description":"本地文件工具箱",
   "start_url":"./",
   "scope": "./",
   "display":"standalone",
