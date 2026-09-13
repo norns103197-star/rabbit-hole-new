@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="兔子洞" />
+    <link rel="icon" href="https://s41.ax1x.com/2026/05/17/pexShsx.png" type="image/png" />
+    <link rel="apple-touch-icon" href="https://s41.ax1x.com/2026/05/17/pexShsx.png" />
+    <meta name="msapplication-TileImage" content="https://s41.ax1x.com/2026/05/17/pexShsx.png" />
+    <meta name="msapplication-TileColor" content="#1a2639" />
+    <meta name="theme-color" content="#1a2639" />
+    <title>兔子洞</title>
+    <!-- 使用独立外部manifest，不再使用data内嵌 -->
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        body {
+            background: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #111827;
+        }
+        .app {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        /* 顶部栏 */
+        .topbar {
+            height: 52px;
+            min-height: 52px;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 12px;
+            z-index: 20;
+        }
+        .menu-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .menu-btn .logo-img {
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+        }
+        .topbar-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .topbar-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #374151;
+        }
+        .icon-btn:hover {
+            background: #f3f4f6;
+        }
+        /* 侧边栏遮罩 */
+        .drawer-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.45);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .drawer-mask.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        /* 侧边栏 */
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 270px;
+            max-width: 82%;
+            background: #fff;
+            z-index: 50;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.12);
+        }
+        .drawer.open {
+            transform: translateX(0);
+        }
+        .drawer-header {
+            padding: 14px 14px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .drawer-header .logo-img {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+        }
+        .drawer-header .title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #111827;
+        }
+        .drawer-header .close-btn {
+            margin-left: auto;
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            cursor: pointer;
+        }
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 8px;
+        }
+        .drawer-section-title {
+            padding: 8px 10px 4px;
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+        .drawer-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+            margin-bottom: 2px;
+        }
+        .drawer-item:hover {
+            background: #f3f4f6;
+        }
+        .drawer-item.active {
+            background: #111827;
+            color: #fff;
+        }
+        .drawer-item .icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+        .drawer-item .label {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .drawer-item .count {
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.08);
+            padding: 1px 7px;
+            border-radius: 999px;
+            color: #6b7280;
+        }
+        .drawer-item.active .count {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+        }
+        .drawer-item .del-cat {
+            font-size: 11px;
+            color: #9ca3af;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+        .drawer-item .del-cat:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .drawer-footer {
+            padding: 10px 8px 14px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .drawer-footer .add-cat-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px dashed #d1d5db;
+            background: #fff;
+            font-size: 13px;
+            color: #4b5563;
+            cursor: pointer;
+        }
+        .drawer-footer .add-cat-btn:hover {
+            background: #f9fafb;
+        }
+        /* 主内容区 */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 40px;
+        }
+        .page-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .page-title .icon {
+            font-size: 17px;
+        }
+        .upload-zone {
+            border: 2px dashed #d1d9e6;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            background: #fff;
+            margin-bottom: 14px;
+            cursor: pointer;
+        }
+        .upload-zone .icon {
+            font-size: 28px;
+        }
+        .upload-zone .title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .upload-zone .sub {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        .upload-zone .file-list {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+        .upload-zone .tag {
+            background: #eef2f6;
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .upload-zone .tag .remove {
+            color: #ef4444;
+            cursor: pointer;
+        }
+        .upload-zone .btns {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .btn {
+            padding: 7px 16px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #111827;
+            color: #fff;
+        }
+        .btn-gray {
+            background: #e5e7eb;
+            color: #111827;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 14px 2px 10px;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .section-header h2 {
+            font-size: 14px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .action-row {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .mini-btn {
+            padding: 5px 9px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .mini-btn.active {
+            background: #111827;
+            color: #fff;
+            border-color: #111827;
+        }
+        .mini-btn.blue {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+        .mini-btn.purple {
+            background: #7c3aed;
+            color: #fff;
+            border-color: #7c3aed;
+        }
+        .mini-btn.red {
+            background: #dc2626;
+            color: #fff;
+            border-color: #dc2626;
+        }
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .item {
+            background: #fff;
+            border-radius: 11px;
+            padding: 9px 10px;
+            border: 1px solid #eef2f6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .item .checkbox {
+            width: 17px;
+            height: 17px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            font-size: 11px;
+            color: #111827;
+        }
+        .item .checkbox.on {
+            background: #111827;
+            border-color: #111827;
+            color: #fff;
+        }
+        .item .drag-icon {
+            color: #d1d5db;
+            font-size: 16px;
+        }
+        .item .name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .item .info {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        .item-actions {
+            display: flex;
+            gap: 2px;
+        }
+        .icon {
+            font-size: 12px;
+        }
+        .icon.blue { color: #3b82f6; }
+        .icon.purple { color: #8b5cf6; }
+        .icon.red { color: #ef4444; }
+        .empty-state {
+            text-align: center;
+            padding: 34px 16px;
+            color: #9ca3af;
+            background: #fff;
+            border-radius: 14px;
+            border: 2px dashed #e5e7eb;
+        }
+        .empty-state .big-icon {
+            font-size: 34px;
+            opacity: 0.4;
+            margin-bottom: 8px;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.45);
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 340px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-box h3 {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .option {
+            padding: 10px 12px;
+            border-radius: 9px;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .option:hover {
+            background: #f9fafb;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 80;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: rgba(17, 24, 39, 0.92);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .toast.success { background: rgba(6, 95, 70, 0.92); }
+        .toast.error { background: rgba(185, 28, 28, 0.92); }
+        .drag-over {
+            outline: 2px solid #6366f1;
+            outline-offset: -2px;
+            background: rgba(99, 102, 241, 0.04);
+        }
+        .dragging { opacity: 0.4; }
+        @media (max-width: 480px) {
+            .item .info { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app"></div>
+    <div class="drawer-mask" id="drawerMask"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header">
+            <img class="logo-img" src="https://s41.ax1x.com/2026/05/17/pexShsx.png" alt="logo">
+            <span class="title">兔子洞</span>
+            <button class="close-btn" onclick="toggleDrawer()">✕</button>
+        </div>
+        <div class="drawer-body" id="drawerBody"></div>
+        <div class="drawer-footer">
+            <button class="add-cat-btn" onclick="addCategory()">+ 新建分类</button>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        //注册service‑worker
+        if('serviceWorker' in navigator){
+            navigator.serviceWorker.register('./sw.js');
+        }
+
+        const KEY = 'rabbit_hole_v19';
+        const DEF_CATS = [
+            { id: 'uncategorized', label: '未分类', icon: '📥' },
+            { id: 'favourites', label: '收藏夹', icon: '⭐' },
+            { id: 'st-cards', label: 'ST角色卡', icon: '🎴' },
+            { id: 'st-themes', label: 'ST主题', icon: '🎨' },
+            { id: 'st-presets', label: 'ST预设', icon: '⚙️' },
+            { id: 'st-plugins', label: 'ST插件', icon: '🔌' },
+            { id: 'fonts', label: '字体', icon: '🔤' },
+            { id: 'persona', label: 'User人设', icon: '👤' },
+            { id: 'image-gen', label: '生图', icon: '🖼️' },
+            { id: 'worldbook', label: '世界书', icon: '📖' },
+            { id: 'extras', label: '番外', icon: '📚' },
+            { id: 'stickers', label: '表情包', icon: '😊' },
+            { id: 'mobile', label: '小手机链接', icon: '🔗' }
+        ];
+        let data = loadData();
+        let cur = data.categories[0]?.id || 'uncategorized';
+        let pending = [];
+        let selected = [];
+        let selectMode = false;
+        let moveModal = null;
+        let batchMoveMode = false;
+        let db = null;
+        let dbReady = false;
+        let drawerOpen = false;
+        const app = document.getElementById('app');
+        const toast = document.getElementById('toast');
+        const drawer = document.getElementById('drawer');
+        const drawerMask = document.getElementById('drawerMask');
+        const drawerBody = document.getElementById('drawerBody');
+        let toastTimer = null;
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(KEY);
+                if (raw) {
+                    const p = JSON.parse(raw);
+                    if (p.categories) return p;
+                }
+            } catch (e) {}
+            return { categories: DEF_CATS, items: {} };
+        }
+        function saveData() {
+            try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+        }
+        function getItems(cid) {
+            return data.items[cid] || [];
+        }
+        function setItems(cid, items) {
+            data.items[cid] = items;
+            saveData();
+            render();
+        }
+        function getAllItems() {
+            const all = [];
+            data.categories.forEach(c => {
+                getItems(c.id).forEach(item => all.push({ ...item, catId: c.id }));
+            });
+            return all;
+        }
+        function showToast(msg, type) {
+            toast.textContent = msg;
+            toast.className = 'toast show';
+            if (type === 'error') toast.classList.add('error');
+            if (type === 'success') toast.classList.add('success');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2500);
+        }
+        function openDB() {
+            return new Promise(function(resolve) {
+                try {
+                    var req = indexedDB.open('RabbitHoleDB', 1);
+                    req.onupgradeneeded = function(e) {
+                        var db = e.target.result;
+                        if (!db.objectStoreNames.contains('files')) {
+                            db.createObjectStore('files', { keyPath: 'id' });
+                        }
+                    };
+                    req.onsuccess = function(e) {
+                        db = e.target.result;
+                        dbReady = true;
+                        resolve(true);
+                    };
+                    req.onerror = function() { resolve(false); };
+                } catch (e) { resolve(false); }
+            });
+        }
+        function saveFileToDB(id, data) {
+            return new Promise(function(resolve) {
+                if (!db) { resolve(false); return; }
+                try {
+                    var tx = db.transaction('files', 'readwrite');
+                    tx.objectStore('files').put({ id: id, data: data });
+                    tx.oncomplete = function() { resolve(true); };
+                    tx.onerror = function() { resolve(false); };
+                } catch (e) { resolve(false); }
+            });
+        }
+        function getFileFromDB(id) {
+            return new Promise(function(resolve) {
+                if (!db) { resolve(null); return; }
+                try {
+                    var tx = db.transaction('files', 'readonly');
+                    var req = tx.objectStore('files').get(id);
+                    req.onsuccess = function() { resolve(req.result ? req.result.data : null); };
+                    req.onerror = function() { resolve(null); };
+                } catch (e) { resolve(null); }
+            });
+        }
+        function deleteFileFromDB(id) {
+            return new Promise(function(resolve) {
+                if (!db) { resolve(false); return; }
+                try {
+                    var tx = db.transaction('files', 'readwrite');
+                    tx.objectStore('files').delete(id);
+                    tx.oncomplete = function() { resolve(true); };
+                    tx.onerror = function() { resolve(false); };
+                } catch (e) { resolve(false); }
+            });
+        }
+        function readFileAsDataURL(file) {
+            return new Promise(function(resolve) {
+                var reader = new FileReader();
+                reader.onload = function() { resolve(reader.result); };
+                reader.onerror = function() { resolve(null); };
+                reader.readAsDataURL(file);
+            });
+        }
+        function toggleDrawer() {
+            drawerOpen = !drawerOpen;
+            if (drawerOpen) {
+                drawer.classList.add('open');
+                drawerMask.classList.add('open');
+            } else {
+                drawer.classList.remove('open');
+                drawerMask.classList.remove('open');
+            }
+            renderDrawer();
+        }
+        function selectCategory(id) {
+            cur = id;
+            drawerOpen = false;
+            drawer.classList.remove('open');
+            drawerMask.classList.remove('open');
+            render();
+        }
+        function handleFilesSelected(files) {
+            var valid = [];
+            for (var i = 0; i < files.length; i++) {
+                if (files[i].size > 0) valid.push(files[i]);
+            }
+            if (!valid.length) { showToast('没有有效文件', 'error'); return; }
+            pending = pending.concat(valid);
+            render();
+            showToast('已选 ' + valid.length + ' 个文件', 'success');
+        }
+        async function confirmUpload() {
+            if (!pending.length) { showToast('请先选择文件', 'error'); return; }
+            if (!dbReady) { showToast('数据库未就绪，请刷新', 'error'); return; }
+            var cid = 'uncategorized';
+            if (!data.categories.find(function(c) { return c.id === cid; })) {
+                data.categories.unshift({ id: 'uncategorized', label: '未分类', icon: '📥' });
+            }
+            if (!data.items[cid]) data.items[cid] = [];
+            var items = getItems(cid);
+            var newItems = [];
+            for (var i = 0; i < pending.length; i++) {
+                var file = pending[i];
+                var id = 'f_' + Date.now().toString(36) + '_' + i;
+                var fileData = await readFileAsDataURL(file);
+                if (fileData) {
+                    await saveFileToDB(id, fileData);
+                    newItems.push({
+                        id: id,
+                        label: file.name,
+                        size: (file.size / 1024).toFixed(1) + 'KB',
+                        createdAt: Date.now() + i
+                    });
+                }
+            }
+            if (newItems.length) {
+                setItems(cid, newItems.concat(items));
+                showToast('✅ 成功上传 ' + newItems.length + ' 个文件到「未分类」', 'success');
+            }
+            pending = [];
+            cur = cid;
+            render();
+        }
+        async function downloadFile(id) {
+            if (!dbReady) { showToast('数据库未就绪', 'error'); return; }
+            var fileData = await getFileFromDB(id);
+            if (!fileData) { showToast('文件已丢失', 'error'); return; }
+            var all = getAllItems();
+            var item = null;
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].id === id) { item = all[i]; break; }
+            }
+            var a = document.createElement('a');
+            a.href = fileData;
+            a.download = item ? item.label : 'download';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('✅ 下载成功', 'success');
+        }
+        async function downloadSelected() {
+            if (!selected.length) { showToast('请先选择文件', 'error'); return; }
+            if (!dbReady) { showToast('数据库未就绪', 'error'); return; }
+            showToast('开始下载 ' + selected.length + ' 个文件...', 'info');
+            var count = 0;
+            for (var i = 0; i < selected.length; i++) {
+                var id = selected[i];
+                var fileData = await getFileFromDB(id);
+                if (fileData) {
+                    var all = getAllItems();
+                    var item = null;
+                    for (var j = 0; j < all.length; j++) {
+                        if (all[j].id === id) { item = all[j]; break; }
+                    }
+                    var a = document.createElement('a');
+                    a.href = fileData;
+                    a.download = item ? item.label : 'download';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    count++;
+                    await new Promise(function(r) { setTimeout(r, 150); });
+                }
+            }
+            showToast('✅ 成功下载 ' + count + '/' + selected.length + ' 个', 'success');
+            selected = [];
+            selectMode = false;
+            render();
+        }
+        async function batchDeleteSelected() {
+            if (!selected.length) { showToast('请先勾选文件', 'error'); return; }
+            if (!confirm(`确定永久删除选中 ${selected.length} 个文件？`)) return;
+            let delCount = 0;
+            const fromCatId = cur;
+            const fromItems = getItems(fromCatId);
+            const remainList = [];
+            for (const it of fromItems) {
+                if (selected.includes(it.id)) {
+                    await deleteFileFromDB(it.id);
+                    delCount++;
+                } else {
+                    remainList.push(it);
+                }
+            }
+            setItems(fromCatId, remainList);
+            showToast(`✅ 已删除 ${delCount} 个文件`, 'success');
+            selected = [];
+            selectMode = false;
+        }
+        function openMoveModal(itemId) {
+            var all = getAllItems();
+            var item = null;
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].id === itemId) { item = all[i]; break; }
+            }
+            if (!item) return;
+            moveModal = {
+                itemId: itemId,
+                currentCategory: item.catId,
+                label: item.label
+            };
+            batchMoveMode = false;
+            render();
+        }
+        function openBatchMoveModal() {
+            if (!selected.length) { showToast('请先勾选文件', 'error'); return; }
+            moveModal = { itemId: null, currentCategory: cur, label: '选中文件' };
+            batchMoveMode = true;
+            render();
+        }
+        function confirmMove(targetCategoryId) {
+            if (!moveModal) return;
+            if (batchMoveMode) {
+                const fromCatId = moveModal.currentCategory;
+                const fromItems = getItems(fromCatId);
+                const toItems = getItems(targetCategoryId);
+                const moveList = [];
+                const remainList = [];
+                fromItems.forEach(it => {
+                    if (selected.includes(it.id)) moveList.push(it);
+                    else remainList.push(it);
+                });
+                setItems(fromCatId, remainList);
+                setItems(targetCategoryId, moveList.concat(toItems));
+                showToast(`✅ 已批量移动 ${moveList.length} 项`, 'success');
+                selected = [];
+                selectMode = false;
+            } else {
+                var itemId = moveModal.itemId;
+                var currentCategory = moveModal.currentCategory;
+                if (targetCategoryId === currentCategory) {
+                    moveModal = null;
+                    render();
+                    return;
+                }
+                var fromItems = getItems(currentCategory);
+                var toItems = getItems(targetCategoryId);
+                var item = null;
+                for (var i = 0; i < fromItems.length; i++) {
+                    if (fromItems[i].id === itemId) { item = fromItems[i]; break; }
+                }
+                if (!item) { moveModal = null; render(); return; }
+                var newFrom = [];
+                for (var j = 0; j < fromItems.length; j++) {
+                    if (fromItems[j].id !== itemId) newFrom.push(fromItems[j]);
+                }
+                setItems(currentCategory, newFrom);
+                setItems(targetCategoryId, [item].concat(toItems));
+                var catLabel = '';
+                for (var k = 0; k < data.categories.length; k++) {
+                    if (data.categories[k].id === targetCategoryId) { catLabel = data.categories[k].label; break; }
+                }
+                showToast('已移动到 ' + catLabel, 'success');
+            }
+            moveModal = null;
+            batchMoveMode = false;
+            render();
+        }
+        async function deleteItem(categoryId, id) {
+            if (!confirm('确定删除？')) return;
+            await deleteFileFromDB(id);
+            var items = getItems(categoryId);
+            var newItems = [];
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].id !== id) newItems.push(items[i]);
+            }
+            setItems(categoryId, newItems);
+            var newSelected = [];
+            for (var j = 0; j < selected.length; j++) {
+                if (selected[j] !== id) newSelected.push(selected[j]);
+            }
+            selected = newSelected;
+            showToast('已删除', 'info');
+        }
+        async function deleteCategory(id) {
+            if (id === 'uncategorized' || id === 'favourites') {
+                showToast('该分类为系统默认，不可删除', 'error');
+                return;
+            }
+            var cat = null;
+            for (var i = 0; i < data.categories.length; i++) {
+                if (data.categories[i].id === id) { cat = data.categories[i]; break; }
+            }
+            if (!cat) return;
+            if (!confirm('删除分类「' + cat.label + '」？文件将移动到「未分类」')) return;
+            var items = getItems(id);
+            var uncatItems = getItems('uncategorized');
+            setItems('uncategorized', items.concat(uncatItems));
+            var newCats = [];
+            for (var j = 0; j < data.categories.length; j++) {
+                if (data.categories[j].id !== id) newCats.push(data.categories[j]);
+            }
+            data.categories = newCats;
+            delete data.items[id];
+            saveData();
+            if (cur === id) cur = 'uncategorized';
+            render();
+            showToast('已删除分类，文件移至「未分类」', 'info');
+        }
+        function addCategory() {
+            var label = prompt('输入分类名称：');
+            if (!label || !label.trim()) return;
+            var exists = false;
+            for (var i = 0; i < data.categories.length; i++) {
+                if (data.categories[i].label === label.trim()) { exists = true; break; }
+            }
+            if (exists) { showToast('分类已存在', 'error'); return; }
+            var newCat = {
+                id: 'cat_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+                label: label.trim(),
+                icon: '📄'
+            };
+            data.categories.push(newCat);
+            data.items[newCat.id] = [];
+            saveData();
+            cur = newCat.id;
+            render();
+            showToast('已添加: ' + label.trim(), 'success');
+        }
+        function toggleSelectMode() {
+            selectMode = !selectMode;
+            if (!selectMode) selected = [];
+            render();
+        }
+        function toggleItemSelection(id) {
+            var found = false;
+            for (var i = 0; i < selected.length; i++) {
+                if (selected[i] === id) { found = true; break; }
+            }
+            if (found) {
+                var newSelected = [];
+                for (var j = 0; j < selected.length; j++) {
+                    if (selected[j] !== id) newSelected.push(selected[j]);
+                }
+                selected = newSelected;
+            } else {
+                selected.push(id);
+            }
+            render();
+        }
+        function selectAllItems() {
+            var items = getItems(cur);
+            if (selected.length === items.length) {
+                selected = [];
+            } else {
+                selected = [];
+                for (var i = 0; i < items.length; i++) {
+                    selected.push(items[i].id);
+                }
+            }
+            render();
+        }
+        function removePendingFile(index) {
+            pending.splice(index, 1);
+            render();
+        }
+        function clearPendingFiles() {
+            pending = [];
+            render();
+        }
+        var dragState = { from: null, to: null, type: null };
+        function onDragStart(e, type, index) {
+            dragState.type = type;
+            dragState.from = index;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text', String(index));
+            e.currentTarget.classList.add('dragging');
+        }
+        function onDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            if (dragState.from !== null && dragState.to !== null && dragState.from !== dragState.to) {
+                if (dragState.type === 'category') {
+                    var moved = data.categories.splice(dragState.from, 1)[0];
+                    data.categories.splice(dragState.to, 0, moved);
+                    saveData();
+                    render();
+                } else if (dragState.type === 'item') {
+                    var items = getItems(cur);
+                    var movedItem = items.splice(dragState.from, 1)[0];
+                    items.splice(dragState.to, 0, movedItem);
+                    setItems(cur, items);
+                }
+            }
+            dragState = { from: null, to: null, type: null };
+            var els = document.querySelectorAll('.drag-over');
+            for (var i = 0; i < els.length; i++) {
+                els[i].classList.remove('drag-over');
+            }
+        }
+        function onDragOver(e, index) {
+            e.preventDefault();
+            dragState.to = index;
+            var els = document.querySelectorAll('.drag-over');
+            for (var i = 0; i < els.length; i++) {
+                els[i].classList.remove('drag-over');
+            }
+            e.currentTarget.classList.add('drag-over');
+        }
+        function onDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+        function renderDrawer() {
+            const catList = data.categories;
+            let html = '<div class="drawer-section-title">分类</div>';
+            catList.forEach((cat, idx) => {
+                const count = (data.items[cat.id] || []).length;
+                const isSysCat = cat.id === 'uncategorized' || cat.id === 'favourites';
+                html += `
+                    <div class="drawer-item ${cur === cat.id ? 'active' : ''}"
+                         draggable="true"
+                         ondragstart="onDragStart(event,'category',${idx})"
+                         ondragover="onDragOver(event,${idx})"
+                         ondragleave="onDragLeave(event)"
+                         ondragend="onDragEnd(event)"
+                         onclick="selectCategory('${cat.id}')">
+                        <span class="icon">${cat.icon}</span>
+                        <span class="label">${cat.label}</span>
+                        <span class="count">${count}</span>
+                        ${!isSysCat ? `<span class="del-cat" onclick="event.stopPropagation();deleteCategory('${cat.id}')">删除</span>` : ''}
+                    </div>
+                `;
+            });
+            drawerBody.innerHTML = html;
+        }
+        function render() {
+            const catList = data.categories;
+            const curCat = catList.find(c => c.id === cur) || catList[0];
+            const items = getItems(cur);
+            let html = `
+                <div class="topbar">
+                    <button class="menu-btn" onclick="toggleDrawer()">
+                        <img class="logo-img" src="https://s41.ax1x.com/2026/05/17/pexShsx.png" alt="logo">
+                        兔子洞
+                    </button>
+                    <div class="topbar-title">${curCat.icon} ${curCat.label}</div>
+                    <div class="topbar-actions">
+                        <button class="icon-btn" onclick="addCategory()" title="新建分类">+</button>
+                    </div>
+                </div>
+                <div class="main">
+                    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                        <div class="icon">📁</div>
+                        <div class="title">点击选择文件</div>
+                        <div class="sub">保存到本地</div>
+                        <input type="file" id="fileInput" multiple style="display:none" onchange="handleFilesSelected(this.files)">
+                        <div class="file-list">
+            `;
+            pending.forEach((f, i) => {
+                html += `<span class="tag">${f.name} <span class="remove" onclick="event.stopPropagation();removePendingFile(${i})">✕</span></span>`;
+            });
+            html += `
+                        </div>
+                        <div class="btns">
+                            <button class="btn btn-primary" onclick="confirmUpload()">确认上传</button>
+                            <button class="btn btn-gray" onclick="clearPendingFiles()">清空</button>
+                        </div>
+                    </div>
+                    <div class="section-header">
+                        <h2><span class="icon">${curCat.icon}</span> ${curCat.label}</h2>
+                        <div class="action-row">
+                            <button class="mini-btn ${selectMode ? 'active' : ''}" onclick="toggleSelectMode()">${selectMode ? '退出选择' : '批量选择'}</button>
+            `;
+            if (selectMode) {
+                html += `
+                            <button class="mini-btn" onclick="selectAllItems()">全选</button>
+                            <button class="mini-btn blue" onclick="downloadSelected()">批量下载</button>
+                            <button class="mini-btn purple" onclick="openBatchMoveModal()">批量移动</button>
+                            <button class="mini-btn red" onclick="batchDeleteSelected()">批量删除</button>
+                `;
+            }
+            html += `
+                        </div>
+                    </div>
+                    <div class="item-list">
+            `;
+            if (items.length === 0) {
+                html += `<div class="empty-state"><div class="big-icon">📭</div>暂无文件</div>`;
+            } else {
+                items.forEach((item, idx) => {
+                    const isSel = selected.includes(item.id);
+                    html += `
+                        <div class="item" draggable="true"
+                             ondragstart="onDragStart(event,'item',${idx})"
+                             ondragover="onDragOver(event,${idx})"
+                             ondragleave="onDragLeave(event)"
+                             ondragend="onDragEnd(event)">
+                            ${selectMode ? `<div class="checkbox ${isSel ? 'on' : ''}" onclick="toggleItemSelection('${item.id}')">${isSel ? '✓' : ''}</div>` : `<span class="drag-icon">⋮⋮</span>`}
+                            <div class="name" title="${item.label}">${item.label}</div>
+                            <div class="info">${item.size}</div>
+                            <div class="item-actions">
+                                <button class="icon blue" onclick="downloadFile('${item.id}')" title="下载">⬇</button>
+                                <button class="icon purple" onclick="openMoveModal('${item.id}')" title="移动">➡</button>
+                                <button class="icon red" onclick="deleteItem('${curCat.id}','${item.id}')" title="删除">🗑</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            html += `
+                    </div>
+                </div>
+            `;
+            if (moveModal) {
+                html += `
+                    <div class="modal-overlay" onclick="if(event.target===this){moveModal=null;batchMoveMode=false;render();}">
+                        <div class="modal-box">
+                            <h3>移动${batchMoveMode ? '选中文件' : '「' + moveModal.label + '」'}到分类</h3>
+                `;
+                catList.forEach(c => {
+                    html += `<div class="option" onclick="confirmMove('${c.id}')">${c.icon} ${c.label}</div>`;
+                });
+                html += `
+                            <div class="modal-actions">
+                                <button class="mini-btn" onclick="moveModal=null;batchMoveMode=false;render();">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            app.innerHTML = html;
+            renderDrawer();
+        }
+        drawerMask.addEventListener('click', toggleDrawer);
+        (async function init() {
+            await openDB();
+            render();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name":"兔子洞",
+  "short_name":"兔子洞",
+  "description":"本地文件分类工具箱",
+  "start_url":"./",
+  "scope": "./",
+  "display":"standalone",
+  "background_color":"#f0f2f5",
+  "theme_color":"#1a2639",
+  "icons":[
+    {
+      "src":"https://s41.ax1x.com/2026/05/17/pexShsx.png",
+      "sizes":"192x192",
+      "type":"image/png"
+    },
+    {
+      "src":"https://s41.ax1x.com/2026/05/17/pexShsx.png",
+      "sizes":"512x512",
+      "type":"image/png"
+    }
+  ]
+}
