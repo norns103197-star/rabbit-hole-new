@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>◜ ᴥ  ◝</title>
-<!-- PWA 配置 -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" href="./icon.png">
@@ -13,106 +12,302 @@
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system}
-body{background:#f5f7fa;color:#222;padding:0;margin:0}
-.wrapper{display:flex;min-height:100vh}
-/* 侧边树形栏 */
-.sidebar{width:280px;background:#fff;border-right:1px solid #e5e7eb;padding:16px;overflow:auto;height:100vh;position:sticky;top:0}
-.sidebar-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #eee}
-.sidebar-header .avatar{font-size:32px}
-.sidebar-header h2{font-size:20px;font-weight:600}
-.tree-item{margin:6px 0}
-.tree-line{display:flex;align-items:center;gap:6px;padding:7px 6px;border-radius:8px;cursor:pointer}
+body{background:#f5f7fa;color:#222;overflow-x:hidden;}
+.wrapper{display:flex;min-height:100vh;position:relative;}
+
+/* 侧边栏 默认隐藏，左侧滑入 */
+.sidebar{
+  width:280px;
+  background:#fff;
+  border-right:1px solid #e5e7eb;
+  padding:16px;
+  overflow:auto;
+  height:100vh;
+  position:fixed;
+  top:0;
+  left:-280px;
+  transition: left 0.3s ease;
+  z-index:100;
+}
+.sidebar.open{
+  left:0;
+}
+.sidebar-mask{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  z-index:99;
+}
+.sidebar-mask.open{
+  display:block;
+}
+
+.sidebar-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:20px;
+  padding-bottom:12px;
+  border-bottom:1px solid #eee;
+}
+.sidebar-header .avatar{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  object-fit:cover;
+}
+.sidebar-header h2{font-size:20px;font-weight:normal;}
+
+.tree-item{margin:6px 0;}
+.tree-line{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 6px;
+  border-radius:8px;
+  cursor:pointer;
+}
 .tree-line:hover{background:#f3f4f6}
 .tree-indent{margin-left:18px}
 .tree-toggle{width:22px;text-align:center;font-size:14px;color:#666}
 .tree-name{flex:1}
 .tree-active{background:#eef2ff;color:#2563eb}
-.new-folder-btn{width:100%;padding:10px;border-radius:99px;border:1px solid #ddd;background:#fff;margin-top:16px;font-size:15px;cursor:pointer}
-/* 主内容区 */
-.main{flex:1;padding:16px;padding-bottom:80px}
-.top-bar{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.new-folder-btn{
+  width:100%;
+  padding:10px;
+  border-radius:99px;
+  border:1px solid #ddd;
+  background:#fff;
+  margin-top:16px;
+  font-size:15px;
+  cursor:pointer;
+}
+
+.main{
+  flex:1;
+  padding:16px;
+  padding-bottom:80px;
+  width:100%;
+}
+.top-bar{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:16px;
+}
+.menu-btn{
+  border:none;
+  background:#fff;
+  width:36px;
+  height:36px;
+  border-radius:8px;
+  font-size:20px;
+  cursor:pointer;
+}
 .search-wrap{flex:1;position:relative}
-#search{width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:99px;font-size:16px}
-.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:22px;color:#888;border:none;background:none;cursor:pointer}
-.breadcrumb{display:flex;gap:6px;align-items:center;margin-bottom:14px;font-size:14px;color:#444;flex-wrap:wrap}
-.breadcrumb a{color:#2563eb;text-decoration:none}
-.upload-area{border:2px dashed #c9d4e3;border-radius:14px;padding:30px 16px;text-align:center;margin-bottom:16px}
+#search{
+  width:100%;
+  padding:10px 36px 10px 12px;
+  border:1px solid #ddd;
+  border-radius:99px;
+  font-size:16px;
+}
+.search-clear{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:22px;
+  color:#888;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+}
+.breadcrumb{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin-bottom:14px;
+  font-size:14px;
+  color:#444;
+  flex-wrap:wrap;
+}
+.breadcrumb a{color:#2563eb;text-decoration:none;cursor:pointer}
+.upload-area{
+  border:2px dashed #c9d4e3;
+  border-radius:14px;
+  padding:30px 16px;
+  text-align:center;
+  margin-bottom:16px;
+}
 .upload-icon{font-size:40px;color:#64748b;margin-bottom:8px}
-.upload-buttons{display:flex;gap:12px;justify-content:center;margin-top:14px}
-.btn{padding:10px 20px;border-radius:99px;border:none;font-size:16px;cursor:pointer}
-.btn-primary{background:#111827;color:white}
+.upload-buttons{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  margin-top:14px;
+}
+.btn{
+  padding:10px 20px;
+  border-radius:99px;
+  border:none;
+  font-size:16px;
+  cursor:pointer;
+}
+.btn-primary{background:#111827;color:#fff}
 .btn-gray{background:#e5e7eb;color:#222}
-.btn-red{background:#dc2626;color:white}
-.btn-blue{background:#2563eb;color:white}
-.operate-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.folder-list,.file-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
-.item{background:white;border-radius:12px;padding:10px;text-align:center;box-shadow:0 1px 3px #00000017;cursor:pointer;position:relative}
-.item-img{width:100%;height:90px;object-fit:contain;border-radius:8px;background:#f1f5f9}
+.btn-red{background:#dc2626;color:#fff}
+.btn-blue{background:#2563eb;color:#fff}
+.operate-bar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.folder-list,.file-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:12px;
+}
+.item{
+  background:#fff;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+  box-shadow:0 1px 3px #00000017;
+  cursor:pointer;
+  position:relative;
+}
+.item-img{
+  width:100%;
+  height:90px;
+  object-fit:contain;
+  border-radius:8px;
+  background:#f1f5f9;
+}
 .item-name{margin-top:6px;font-size:14px;word-break:break-all}
-.item-ctx{position:absolute;right:4px;top:4px;background:#00000022;border:none;border-radius:50%;width:24px;height:24px}
-.ctx-menu{position:fixed;background:white;box-shadow:0 4px 12px #0003;border-radius:10px;padding:8px;z:999}
-.ctx-menu button{display:block;width:100%;text-align:left;padding:8px 12px;border:none;background:none;font-size:15px;cursor:pointer}
+.item-ctx{
+  position:absolute;
+  right:4px;
+  top:4px;
+  background:#00000022;
+  border:none;
+  border-radius:50%;
+  width:24px;
+  height:24px;
+}
+.ctx-menu{
+  position:fixed;
+  background:#fff;
+  box-shadow:0 4px 12px #0003;
+  border-radius:10px;
+  padding:8px;
+  z-index:999;
+}
+.ctx-menu button{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:8px 12px;
+  border:none;
+  background:none;
+  font-size:15px;
+  cursor:pointer;
+}
 .ctx-menu button:hover{background:#f3f4f6}
-.modal{position:fixed;inset:0;background:#00000066;display:flex;align-items:center;justify-content:center;z:999}
-.modal-box{background:white;padding:20px;border-radius:14px;width:90%;max-width:420px}
-.modal input{width:100%;padding:10px;margin:12px 0;border:1px solid #ddd;border-radius:8px;font-size:16px}
-.modal-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.66);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+.modal-box{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  width:90%;
+  max-width:420px;
+}
+.modal input{
+  width:100%;
+  padding:10px;
+  margin:12px 0;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:16px;
+}
+.modal-buttons{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  margin-top:12px;
+}
 .hide{display:none !important}
-.checkbox-item{position:absolute;left:6px;top:6px;width:18px;height:18px}
+.checkbox-item{
+  position:absolute;
+  left:6px;
+  top:6px;
+  width:18px;
+  height:18px;
+}
 </style>
 </head>
 <body>
 <div class="wrapper">
-<!-- 左侧树形侧边栏 -->
-<div class="sidebar">
-<div class="sidebar-header">
-<img class="avatar" src="./icon.png" style="width:32px;height:32px;border-radius:8px;object-fit:cover;">
-<h2>◜ ᴥ  ◝</h2>
-</div>
-<div id="treeWrap"></div>
-<button class="new-folder-btn" id="sidebarNewFolder">+ 新建文件夹</button>
-</div>
+  <div class="sidebar-mask" id="sidebarMask"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <img class="avatar" src="./icon.png">
+      <h2>◜ ᴥ  ◝</h2>
+    </div>
+    <div id="treeWrap"></div>
+    <button class="new-folder-btn" id="sidebarNewFolder">+ 新建文件夹</button>
+  </div>
 
-<!-- 主区域 -->
-<div class="main">
-<div class="top-bar">
-<div class="search-wrap">
-<input id="search" placeholder="搜索全部文件/文件夹">
-<button class="search-clear" id="searchClear">×</button>
-</div>
-</div>
-<div class="breadcrumb" id="breadcrumb"></div>
-<div class="upload-area">
-<div class="upload-icon">📁</div>
-<div>点击选择文件（上传自动进入【未分类】）</div>
-<input type="file" id="fileInput" multiple class="hide">
-<div class="upload-buttons">
-<button class="btn btn-primary" id="selectFileBtn">选择文件</button>
-<button class="btn btn-gray" id="uploadClear">清空</button>
-</div>
-</div>
-<div class="operate-bar">
-<button class="btn btn-gray" id="selectAll">全选</button>
-<button class="btn btn-blue" id="batchMove">批量移动</button>
-<button class="btn btn-blue" id="batchDownload">批量下载</button>
-<button class="btn btn-red" id="batchDel">批量删除</button>
-<button class="btn btn-primary" id="newFolder">新建文件夹</button>
-</div>
-<div id="folderList" class="folder-list"></div>
-<div id="fileList" class="file-list"></div>
-</div>
+  <div class="main">
+    <div class="top-bar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="search-wrap">
+        <input id="search" placeholder="搜索全部文件/文件夹">
+        <button class="search-clear" id="searchClear">×</button>
+      </div>
+    </div>
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="upload-area">
+      <div class="upload-icon">📁</div>
+      <div>点击选择文件（上传自动进入【未分类】）</div>
+      <input type="file" id="fileInput" multiple class="hide">
+      <div class="upload-buttons">
+        <button class="btn btn-primary" id="selectFileBtn">选择文件</button>
+        <button class="btn btn-gray" id="uploadClear">清空</button>
+      </div>
+    </div>
+    <div class="operate-bar">
+      <button class="btn btn-gray" id="selectAll">全选</button>
+      <button class="btn btn-blue" id="batchMove">批量移动</button>
+      <button class="btn btn-blue" id="batchDownload">批量下载</button>
+      <button class="btn btn-red" id="batchDel">批量删除</button>
+      <button class="btn btn-primary" id="newFolder">新建文件夹</button>
+    </div>
+    <div id="folderList" class="folder-list"></div>
+    <div id="fileList" class="file-list"></div>
+  </div>
 </div>
 
 <div class="ctx-menu hide" id="ctxMenu"></div>
 <div class="modal hide" id="renameModal">
-<div class="modal-box">
-<h3>重命名</h3>
-<input id="renameInput">
-<div class="modal-buttons">
-<button class="btn btn-gray" id="renameCancel">取消</button>
-<button class="btn btn-primary" id="renameOk">确认</button>
-</div>
-</div>
+  <div class="modal-box">
+    <h3>重命名</h3>
+    <input id="renameInput">
+    <div class="modal-buttons">
+      <button class="btn btn-gray" id="renameCancel">取消</button>
+      <button class="btn btn-primary" id="renameOk">确认</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -124,388 +319,417 @@ let selectedItems = new Set();
 let searchText = "";
 let ctxTarget = null;
 let renameType = "";
-// 记录树形展开状态
 const expandSet = new Set(["root"]);
 
+const sidebar = document.getElementById('sidebar');
+const sidebarMask = document.getElementById('sidebarMask');
+const menuBtn = document.getElementById('menuBtn');
+
+menuBtn.onclick = ()=>{
+  sidebar.classList.add('open');
+  sidebarMask.classList.add('open');
+}
+sidebarMask.onclick = ()=>{
+  sidebar.classList.remove('open');
+  sidebarMask.classList.remove('open');
+}
+
 async function openDB(){
-    return new Promise((res,rej)=>{
-        const req = indexedDB.open(DB_NAME,DB_VERSION);
-        req.onupgradeneeded = e=>{
-            db = e.target.result;
-            db.createObjectStore("folders",{keyPath:"id"});
-            db.createObjectStore("files",{keyPath:"id"});
-        };
-        req.onsuccess = e=>{
-            db = e.target.result;
-            res(db);
-        };
-        req.onerror = e=>rej(e);
-    })
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded = e=>{
+      db = e.target.result;
+      db.createObjectStore("folders",{keyPath:"id"});
+      db.createObjectStore("files",{keyPath:"id"});
+    };
+    req.onsuccess = e=>{
+      db = e.target.result;
+      res(db);
+    };
+    req.onerror = e=>rej(e);
+  })
 }
 function uuid(){return crypto.randomUUID()}
+
 async function init(){
-    await openDB();
-    const folders = await getFoldersByParent("root");
-    if(!folders.find(f=>f.name==="未分类")){
-        await addFolder({id:uuid(),name:"未分类",parentId:"root",system:true})
-    }
-    renderTree();
-    render();
-    // PWA注册
-    if('serviceWorker' in navigator){
-        navigator.serviceWorker.register('service-worker.js');
-    }
+  await openDB();
+  const folders = await getFoldersByParent("root");
+  if(!folders.find(f=>f.name==="未分类")){
+    await addFolder({id:uuid(),name:"未分类",parentId:"root",system:true})
+  }
+  renderTree();
+  render();
+  // ✔修复service‑worker注册
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('service-worker.js');
+  }
 }
 
 // Folder CRUD
 async function addFolder(f){
-    const tx = db.transaction("folders","readwrite");
-    tx.objectStore("folders").add(f);
-    await tx.complete;
+  const tx = db.transaction("folders","readwrite");
+  tx.objectStore("folders").add(f);
+  await tx.complete;
 }
 async function getFoldersByParent(pid){
-    return new Promise(res=>{
-        const tx = db.transaction("folders");
-        const store = tx.objectStore("folders");
-        const req = store.getAll();
-        req.onsuccess=()=>res(req.result.filter(i=>i.parentId===pid))
-    })
+  return new Promise(res=>{
+    const tx = db.transaction("folders");
+    const store = tx.objectStore("folders");
+    const req = store.getAll();
+    req.onsuccess=()=>res(req.result.filter(i=>i.parentId===pid))
+  })
 }
 async function updateFolder(f){
-    const tx = db.transaction("folders","readwrite");
-    tx.objectStore("folders").put(f);
-    await tx.complete;
+  const tx = db.transaction("folders","readwrite");
+  tx.objectStore("folders").put(f);
+  await tx.complete;
 }
 async function delFolder(id){
-    const tx = db.transaction("folders","readwrite");
-    tx.objectStore("folders").delete(id);
-    await tx.complete;
+  const tx = db.transaction("folders","readwrite");
+  tx.objectStore("folders").delete(id);
+  await tx.complete;
 }
 
 // File CRUD
 async function addFile(f){
-    const tx = db.transaction("files","readwrite");
-    tx.objectStore("files").add(f);
-    await tx.complete;
+  const tx = db.transaction("files","readwrite");
+  tx.objectStore("files").add(f);
+  await tx.complete;
 }
 async function getFilesByParent(pid){
-    return new Promise(res=>{
-        const tx = db.transaction("files");
-        const store = tx.objectStore("files");
-        const req = store.getAll();
-        req.onsuccess=()=>res(req.result.filter(i=>i.parentId===pid))
-    })
+  return new Promise(res=>{
+    const tx = db.transaction("files");
+    const store = tx.objectStore("files");
+    const req = store.getAll();
+    req.onsuccess=()=>res(req.result.filter(i=>i.parentId===pid))
+  })
 }
 async function updateFile(f){
-    const tx = db.transaction("files","readwrite");
-    tx.objectStore("files").put(f);
-    await tx.complete;
+  const tx = db.transaction("files","readwrite");
+  tx.objectStore("files").put(f);
+  await tx.complete;
 }
 async function delFile(id){
-    const tx = db.transaction("files","readwrite");
-    tx.objectStore("files").delete(id);
-    await tx.complete;
-}
-
-// 渲染左侧树形文件夹
-async function renderTree(){
-    const wrap = document.getElementById("treeWrap");
-    const allFolders = await getAllFolders();
-    // 递归渲染树
-    function renderNode(parentId,level=0){
-        const children = allFolders.filter(f=>f.parentId===parentId);
-        let html = "";
-        for(const item of children){
-            const hasChild = allFolders.some(x=>x.parentId===item.id);
-            const isExpand = expandSet.has(item.id);
-            const isActive = currentPath.at(-1) === item.id;
-            html += `<div class="tree-item tree-indent" style="padding-left:${level*18}px">
-                <div class="tree-line ${isActive?'tree-active':''}" data-fid="${item.id}">
-                    <span class="tree-toggle">${hasChild ? (isExpand ? "−" : "+") : " "}</span>
-                    <span>📁</span>
-                    <span class="tree-name">${item.name}</span>
-                </div>
-            </div>`;
-            if(isExpand && hasChild){
-                html += renderNode(item.id, level+1);
-            }
-        }
-        return html;
-    }
-    // 根节点
-    let treeHtml = `<div class="tree-item">
-        <div class="tree-line ${currentPath.at(-1)==='root'?'tree-active':''}" data-fid="root">
-            <span class="tree-toggle">−</span>
-            <span>📂</span>
-            <span class="tree-name">全部文件</span>
-        </div>
-    </div>`;
-    treeHtml += renderNode("root",0);
-    wrap.innerHTML = treeHtml;
-
-    // 绑定点击事件
-    wrap.querySelectorAll(".tree-line").forEach(el=>{
-        el.onclick = async ()=>{
-            const fid = el.dataset.fid;
-            if(fid === "root"){
-                currentPath = ["root"];
-            }else{
-                // 重建路径
-                const path = [];
-                let target = allFolders.find(x=>x.id===fid);
-                while(target){
-                    path.unshift({id:target.id,name:target.name});
-                    target = allFolders.find(x=>x.id===target.parentId);
-                }
-                path.unshift("root");
-                currentPath = path;
-            }
-            // 切换展开折叠
-            const childFolders = allFolders.filter(x=>x.parentId===fid);
-            if(childFolders.length>0){
-                if(expandSet.has(fid)) expandSet.delete(fid);
-                else expandSet.add(fid);
-            }
-            renderTree();
-            render();
-        }
-    })
-}
-
-// Render main content
-async function render(){
-    selectedItems.clear();
-    const parentId = currentPath.at(-1);
-    let folders = await getFoldersByParent(parentId);
-    let files = await getFilesByParent(parentId);
-    if(searchText.trim()!==""){
-        const allFolders = await getAllFolders();
-        const allFiles = await getAllFiles();
-        folders = allFolders.filter(x=>x.name.includes(searchText));
-        files = allFiles.filter(x=>x.name.includes(searchText));
-    }
-    renderBreadcrumb();
-    renderFolderList(folders);
-    renderFileList(files);
-    renderTree();
+  const tx = db.transaction("files","readwrite");
+  tx.objectStore("files").delete(id);
+  await tx.complete;
 }
 async function getAllFolders(){
-    return new Promise(res=>{
-        const tx = db.transaction("folders");
-        const req = tx.objectStore("folders").getAll();
-        req.onsuccess=()=>res(req.result)
-    })
+  return new Promise(res=>{
+    const tx = db.transaction("folders");
+    const req = tx.objectStore("folders").getAll();
+    req.onsuccess=()=>res(req.result)
+  })
 }
 async function getAllFiles(){
-    return new Promise(res=>{
-        const tx = db.transaction("files");
-        const req = tx.objectStore("files").getAll();
-        req.onsuccess=()=>res(req.result)
-    })
-}
-function renderBreadcrumb(){
-    const wrap = document.getElementById("breadcrumb");
-    const names = currentPath.map((p,idx)=>{
-        if(p==="root") return {name:"全部文件",path:["root"]};
-        return {name:p.name,path:currentPath.slice(0,idx+1)}
-    })
-    let html = "";
-    names.forEach((item,i)=>{
-        if(i>0) html += " > ";
-        html += `<a data-path='${JSON.stringify(item.path)}'>${item.name}</a>`
-    })
-    wrap.innerHTML = html;
-    wrap.querySelectorAll("a").forEach(a=>{
-        a.onclick=()=>{
-            currentPath = JSON.parse(a.dataset.path);
-            render();
-        }
-    })
-}
-async function renderFolderList(folders){
-    const wrap = document.getElementById("folderList");
-    let html = "";
-    for(const f of folders){
-        html += `
-        <div class="item" data-id="${f.id}" data-type="folder">
-            <input type="checkbox" class="checkbox-item">
-            <div class="item-img">📁</div>
-            <div class="item-name">${f.name}</div>
-            <button class="item-ctx">⋮</button>
-        </div>`
-    }
-    wrap.innerHTML = html;
-    wrap.querySelectorAll(".item").forEach(el=>{
-        el.onclick=e=>{
-            if(e.target.classList.contains("item-ctx")||e.target.classList.contains("checkbox-item")) return;
-            currentPath.push({id:el.dataset.id,name:el.querySelector(".item-name").textContent});
-            render();
-        }
-        el.querySelector(".item-ctx").onclick=e=>{
-            e.stopPropagation();
-            showCtx(e,{type:"folder",data:f});
-        }
-        el.querySelector(".checkbox-item").onchange=()=>{
-            selectedItems.has(el.dataset.id)?selectedItems.delete(el.dataset.id):selectedItems.add(el.dataset.id);
-        }
-    })
-}
-async function renderFileList(files){
-    const wrap = document.getElementById("fileList");
-    let html = "";
-    for(const f of files){
-        let preview = "📄";
-        if(f.type.startsWith("image/")) preview = `<img class="item-img" src="${f.blobUrl}">`;
-        else if(f.type.startsWith("video/")) preview = `<video class="item-img" src="${f.blobUrl}" muted></video>`;
-        else preview = `<div class="item-img">📦</div>`;
-        html += `
-        <div class="item" data-id="${f.id}" data-type="file">
-            <input type="checkbox" class="checkbox-item">
-            ${preview}
-            <div class="item-name">${f.name}</div>
-            <button class="item-ctx">⋮</button>
-        </div>`
-    }
-    wrap.innerHTML = html;
-    wrap.querySelectorAll(".item").forEach(el=>{
-        el.querySelector(".item-ctx").onclick=e=>{
-            e.stopPropagation();
-            showCtx(e,{type:"file",data:f});
-        }
-        el.querySelector(".checkbox-item").onchange=()=>{
-            selectedItems.has(el.dataset.id)?selectedItems.delete(el.dataset.id):selectedItems.add(el.dataset.id);
-        }
-    })
+  return new Promise(res=>{
+    const tx = db.transaction("files");
+    const req = tx.objectStore("files").getAll();
+    req.onsuccess=()=>res(req.result)
+  })
 }
 
-// Context Menu
-function showCtx(e,target){
-    ctxTarget = target;
-    const menu = document.getElementById("ctxMenu");
-    menu.innerHTML = `
-        <button id="ctxRename">重命名</button>
-        <button id="ctxDel">删除</button>
-    `;
-    menu.classList.remove("hide");
-    menu.style.left = e.clientX+"px";
-    menu.style.top = e.clientY+"px";
-    document.getElementById("ctxRename").onclick=()=>{
-        openRename(target);
-        menu.classList.add("hide");
+// 树形渲染 支持无限层级 A→a b
+async function renderTree(){
+  const wrap = document.getElementById("treeWrap");
+  const allFolders = await getAllFolders();
+  function renderNode(parentId,level=0){
+    const children = allFolders.filter(f=>f.parentId===parentId);
+    let html = "";
+    for(const item of children){
+      const hasChild = allFolders.some(x=>x.parentId===item.id);
+      const isExpand = expandSet.has(item.id);
+      const isActive = currentPath.at(-1) === item.id;
+      html += `<div class="tree-item tree-indent" style="padding-left:${level*18}px">
+        <div class="tree-line ${isActive?'tree-active':''}" data-fid="${item.id}" data-fname="${item.name}">
+          <span class="tree-toggle">${hasChild ? (isExpand ? "−" : "+") : " "}</span>
+          <span>📁</span>
+          <span class="tree-name">${item.name}</span>
+        </div>
+      </div>`;
+      if(isExpand && hasChild){
+        html += renderNode(item.id, level+1);
+      }
     }
-    document.getElementById("ctxDel").onclick=async()=>{
-        if(target.type==="folder") await delFolder(target.data.id);
-        else await delFile(target.data.id);
-        render();
-        menu.classList.add("hide");
+    return html;
+  }
+  let treeHtml = `<div class="tree-item">
+    <div class="tree-line ${currentPath.at(-1)==='root'?'tree-active':''}" data-fid="root" data-fname="全部文件">
+      <span class="tree-toggle">−</span>
+      <span>📂</span>
+      <span class="tree-name">全部文件</span>
+    </div>
+  </div>`;
+  treeHtml += renderNode("root",0);
+  wrap.innerHTML = treeHtml;
+
+  wrap.querySelectorAll(".tree-line").forEach(el=>{
+    el.onclick = async ()=>{
+      const fid = el.dataset.fid;
+      const allFolders = await getAllFolders();
+      // 重建完整路径
+      if(fid === "root"){
+        currentPath = ["root"];
+      }else{
+        let pathArr = [];
+        let cur = allFolders.find(x=>x.id === fid);
+        while(cur){
+          pathArr.unshift(cur.id);
+          cur = allFolders.find(x=>x.id === cur.parentId);
+        }
+        currentPath = ["root", ...pathArr];
+      }
+      // 切换展开折叠
+      const childs = allFolders.filter(x=>x.parentId === fid);
+      if(childs.length>0){
+        expandSet.has(fid) ? expandSet.delete(fid) : expandSet.add(fid);
+      }
+      // 点击树节点自动关闭侧边栏
+      sidebar.classList.remove('open');
+      sidebarMask.classList.remove('open');
+      renderTree();
+      render();
     }
+  })
+}
+
+async function render(){
+  selectedItems.clear();
+  const parentId = currentPath.at(-1);
+  let folders = await getFoldersByParent(parentId);
+  let files = await getFilesByParent(parentId);
+  if(searchText.trim()!==""){
+    const allFolders = await getAllFolders();
+    const allFiles = await getAllFiles();
+    folders = allFolders.filter(x=>x.name.includes(searchText));
+    files = allFiles.filter(x=>x.name.includes(searchText));
+  }
+  renderBreadcrumb();
+  renderFolderList(folders);
+  renderFileList(files);
+  renderTree();
+}
+
+async function renderBreadcrumb(){
+  const wrap = document.getElementById("breadcrumb");
+  const allFolders = await getAllFolders();
+  let html = "";
+  for(let i=0;i<currentPath.length;i++){
+    const pid = currentPath[i];
+    if(pid === "root"){
+      html += `<a data-index="${i}">全部文件</a>`;
+    }else{
+      const f = allFolders.find(x=>x.id === pid);
+      if(f) html += ` / <a data-index="${i}">${f.name}</a>`;
+    }
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("a").forEach(a=>{
+    a.onclick = ()=>{
+      const idx = Number(a.dataset.index);
+      currentPath = currentPath.slice(0, idx+1);
+      render();
+    }
+  })
+}
+
+async function renderFolderList(folders){
+  const wrap = document.getElementById("folderList");
+  let html = "";
+  for(const f of folders){
+    html += `
+    <div class="item" data-id="${f.id}" data-type="folder">
+      <input type="checkbox" class="checkbox-item">
+      <div class="item-img">📁</div>
+      <div class="item-name">${f.name}</div>
+      <button class="item-ctx">⋮</button>
+    </div>`
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll(".item").forEach(el=>{
+    const itemId = el.dataset.id;
+    const itemType = el.dataset.type;
+    el.onclick = e=>{
+      if(e.target.classList.contains("checkbox-item")||e.target.classList.contains("item-ctx")) return;
+      currentPath.push(itemId);
+      render();
+    }
+    el.querySelector(".item-ctx").onclick = async e=>{
+      e.stopPropagation();
+      const allF = await getAllFolders();
+      const folderObj = allF.find(x=>x.id === itemId);
+      showCtxMenu(e,{type:itemType,data:folderObj});
+    }
+    el.querySelector(".checkbox-item").onchange=()=>{
+      el.querySelector(".checkbox-item").checked ? selectedItems.add(itemId) : selectedItems.delete(itemId);
+    }
+  })
+}
+
+async function renderFileList(files){
+  const wrap = document.getElementById("fileList");
+  let html = "";
+  for(const f of files){
+    let preview = "📄";
+    if(f.type.startsWith("image/")) preview = `<img class="item-img" src="${f.blobUrl}">`;
+    else if(f.type.startsWith("video/")) preview = `<video class="item-img" src="${f.blobUrl}" muted></video>`;
+    else preview = `<div class="item-img">📦</div>`;
+    html += `
+    <div class="item" data-id="${f.id}" data-type="file">
+      <input type="checkbox" class="checkbox-item">
+      ${preview}
+      <div class="item-name">${f.name}</div>
+      <button class="item-ctx">⋮</button>
+    </div>`
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll(".item").forEach(el=>{
+    const itemId = el.dataset.id;
+    const itemType = el.dataset.type;
+    el.querySelector(".item-ctx").onclick = async e=>{
+      e.stopPropagation();
+      const allF = await getAllFiles();
+      const fileObj = allF.find(x=>x.id === itemId);
+      showCtxMenu(e,{type:itemType,data:fileObj});
+    }
+    el.querySelector(".checkbox-item").onchange=()=>{
+      el.querySelector(".checkbox-item").checked ? selectedItems.add(itemId) : selectedItems.delete(itemId);
+    }
+  })
+}
+
+function showCtxMenu(e,target){
+  ctxTarget = target;
+  const menu = document.getElementById("ctxMenu");
+  menu.innerHTML = `
+    <button id="ctxRename">重命名</button>
+    <button id="ctxDel">删除</button>
+  `;
+  menu.classList.remove("hide");
+  menu.style.left = `${e.clientX}px`;
+  menu.style.top = `${e.clientY}px`;
+  document.getElementById("ctxRename").onclick=()=>{
+    openRename(target);
+    menu.classList.add("hide");
+  }
+  document.getElementById("ctxDel").onclick=async()=>{
+    if(target.type==="folder") await delFolder(target.data.id);
+    else await delFile(target.data.id);
+    render();
+    menu.classList.add("hide");
+  }
 }
 document.addEventListener("click",()=>document.getElementById("ctxMenu").classList.add("hide"))
 
-// Rename
 function openRename(target){
-    ctxTarget = target;
-    renameType = target.type;
-    document.getElementById("renameInput").value = target.data.name;
-    document.getElementById("renameModal").classList.remove("hide");
+  ctxTarget = target;
+  renameType = target.type;
+  document.getElementById("renameInput").value = target.data.name;
+  document.getElementById("renameModal").classList.remove("hide");
 }
 document.getElementById("renameCancel").onclick=()=>document.getElementById("renameModal").classList.add("hide");
 document.getElementById("renameOk").onclick=async()=>{
-    const newName = document.getElementById("renameInput").value.trim();
-    if(!newName) return;
-    ctxTarget.data.name = newName;
-    if(renameType==="folder") await updateFolder(ctxTarget.data);
-    else await updateFile(ctxTarget.data);
-    document.getElementById("renameModal").classList.add("hide");
-    render();
+  const newName = document.getElementById("renameInput").value.trim();
+  if(!newName) return;
+  ctxTarget.data.name = newName;
+  if(renameType==="folder") await updateFolder(ctxTarget.data);
+  else await updateFile(ctxTarget.data);
+  document.getElementById("renameModal").classList.add("hide");
+  render();
 }
 
-// Upload
+// ✔修复上传：上传文件固定存入【未分类】文件夹
 document.getElementById("selectFileBtn").onclick=()=>document.getElementById("fileInput").click();
 document.getElementById("fileInput").onchange=async(e)=>{
-    const fileList = e.target.files;
-    const unclassifiedFolder = (await getFoldersByParent("root")).find(f=>f.name==="未分类");
-    for(const file of fileList){
-        const blobUrl = URL.createObjectURL(file);
-        await addFile({
-            id:uuid(),
-            name:file.name,
-            type:file.type,
-            size:file.size,
-            blob:file,
-            blobUrl,
-            parentId:unclassifiedFolder.id
-        })
-    }
-    document.getElementById("fileInput").value="";
-    render();
+  const fileList = e.target.files;
+  const rootFolders = await getFoldersByParent("root");
+  const unclassified = rootFolders.find(f=>f.name === "未分类");
+  for(const file of fileList){
+    const blobUrl = URL.createObjectURL(file);
+    await addFile({
+      id:uuid(),
+      name:file.name,
+      type:file.type,
+      size:file.size,
+      blob:file,
+      blobUrl:blobUrl,
+      parentId: unclassified.id
+    })
+  }
+  document.getElementById("fileInput").value="";
+  render();
 }
 document.getElementById("uploadClear").onclick=()=>document.getElementById("fileInput").value="";
 
-// Search
+// 搜索
 document.getElementById("search").oninput=e=>{
-    searchText = e.target.value;
-    render();
+  searchText = e.target.value;
+  render();
 }
 document.getElementById("searchClear").onclick=()=>{
-    document.getElementById("search").value="";
-    searchText = "";
-    render();
+  document.getElementById("search").value="";
+  searchText = "";
+  render();
 }
 
-// Batch
-document.getElementById("selectAll").onclick=()=>{
-    document.querySelectorAll(".checkbox-item").forEach(cb=>cb.checked=true);
-    document.querySelectorAll(".item").forEach(it=>selectedItems.add(it.dataset.id));
+//批量
+document.getElementById("selectAll").onclick=async()=>{
+  document.querySelectorAll(".checkbox-item").forEach(cb=>{
+    cb.checked = true;
+    selectedItems.add(cb.closest(".item").dataset.id);
+  })
 }
 document.getElementById("batchDel").onclick=async()=>{
-    for(const id of selectedItems){
-        const f = await getFileById(id);
-        if(f) await delFile(id);
-        else await delFolder(id);
-    }
-    render();
-}
-document.getElementById("batchDownload").onclick=async()=>{
-    const zip = new JSZip();
-    for(const id of selectedItems){
-        const f = await getFileById(id);
-        if(f) zip.file(f.name,f.blob);
-    }
-    const blob = await zip.generateAsync({type:"blob"});
-    saveAs(blob,"批量文件.zip");
-}
-document.getElementById("batchMove").onclick=async()=>{
-    const allFolders = await getAllFolders();
-    const targetId = prompt("输入目标文件夹ID\n全部文件夹列表：\n"+allFolders.map(x=>x.name+" | "+x.id).join("\n"));
-    if(!targetId) return;
-    for(const id of selectedItems){
-        const f = await getFileById(id);
-        if(f){
-            f.parentId = targetId;
-            await updateFile(f);
-        }
-    }
-    render();
+  for(const id of selectedItems){
+    const f = await getFileById(id);
+    f ? await delFile(id) : await delFolder(id);
+  }
+  render();
 }
 async function getFileById(id){
-    return new Promise(res=>{
-        const tx = db.transaction("files");
-        const req = tx.objectStore("files").get(id);
-        req.onsuccess=()=>res(req.result)
-    })
+  return new Promise(res=>{
+    const tx = db.transaction("files");
+    const req = tx.objectStore("files").get(id);
+    req.onsuccess=()=>res(req.result)
+  })
 }
+document.getElementById("batchDownload").onclick=async()=>{
+  const zip = new JSZip();
+  for(const id of selectedItems){
+    const f = await getFileById(id);
+    if(f) zip.file(f.name,f.blob);
+  }
+  const blob = await zip.generateAsync({type:"blob"});
+  saveAs(blob,"批量文件.zip");
+}
+document.getElementById("batchMove").onclick=async()=>{
+  const allFolders = await getAllFolders();
+  const targetId = prompt("输入目标文件夹ID\n全部文件夹列表：\n"+allFolders.map(x=>x.name+" | "+x.id).join("\n"));
+  if(!targetId) return;
+  for(const id of selectedItems){
+    const f = await getFileById(id);
+    if(f){
+      f.parentId = targetId;
+      await updateFile(f);
+    }
+  }
+  render();
+}
+
+// ✔支持创建子文件夹：在当前打开目录下新建子文件夹
 document.getElementById("newFolder").onclick=async()=>{
-    const name = prompt("新建文件夹名称");
-    if(!name) return;
-    await addFolder({id:uuid(),name,parentId:currentPath.at(-1),system:false})
-    render();
+  const name = prompt("新建文件夹名称");
+  if(!name) return;
+  const pid = currentPath.at(-1);
+  await addFolder({id:uuid(),name:name,parentId:pid,system:false});
+  render();
 }
 document.getElementById("sidebarNewFolder").onclick=async()=>{
-    const name = prompt("新建文件夹名称");
-    if(!name) return;
-    await addFolder({id:uuid(),name,parentId:currentPath.at(-1),system:false})
-    render();
+  const name = prompt("新建文件夹名称");
+  if(!name) return;
+  const pid = currentPath.at(-1);
+  await addFolder({id:uuid(),name:name,parentId:pid,system:false});
+  render();
 }
 
 init();
