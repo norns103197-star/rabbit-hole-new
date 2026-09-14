@@ -28,6 +28,8 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
   left:-280px;
   transition: left 0.3s ease;
   z-index:100;
+  display:flex;
+  flex-direction:column;
 }
 .sidebar.open{
   left:0;
@@ -58,7 +60,10 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
   object-fit:cover;
 }
 .sidebar-header h2{font-size:20px;font-weight:normal;}
-
+#treeWrap{
+  flex:1;
+  overflow:auto;
+}
 .tree-item{margin:6px 0;}
 .tree-line{
   display:flex;
@@ -70,7 +75,7 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
 }
 .tree-line:hover{background:#f3f4f6}
 .tree-indent{margin-left:18px}
-.tree-toggle{width:22px;text-align:center;font-size:14px;color:#666}
+.tree-toggle{width:22px;text-align:center;font-size:14px;color:#666;cursor:pointer}
 .tree-name{flex:1}
 .tree-active{background:#eef2ff;color:#2563eb}
 .new-folder-btn{
@@ -82,6 +87,7 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
   margin-top:16px;
   font-size:15px;
   cursor:pointer;
+  flex-shrink:0;
 }
 
 .main{
@@ -231,6 +237,8 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
   border-radius:14px;
   width:90%;
   max-width:420px;
+  max-height:80vh;
+  overflow:auto;
 }
 .modal input{
   width:100%;
@@ -254,6 +262,10 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
   width:18px;
   height:18px;
 }
+.tree-modal-item{margin:4px 0}
+.tree-modal-line{padding:6px;cursor:pointer;border-radius:6px}
+.tree-modal-line:hover{background:#eef2ff}
+.tree-name-modal{cursor:pointer}
 </style>
 </head>
 <body>
@@ -279,7 +291,7 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
     <div class="breadcrumb" id="breadcrumb"></div>
     <div class="upload-area">
       <div class="upload-icon">📁</div>
-      <div>点击选择文件（上传自动进入【未分类】）</div>
+      <div>点击选择文件</div>
       <input type="file" id="fileInput" multiple class="hide">
       <div class="upload-buttons">
         <button class="btn btn-primary" id="selectFileBtn">选择文件</button>
@@ -299,6 +311,8 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
 </div>
 
 <div class="ctx-menu hide" id="ctxMenu"></div>
+
+<!-- 重命名弹窗 -->
 <div class="modal hide" id="renameModal">
   <div class="modal-box">
     <h3>重命名</h3>
@@ -306,6 +320,18 @@ body{background:#f5f7fa;color:#222;overflow-x:hidden;}
     <div class="modal-buttons">
       <button class="btn btn-gray" id="renameCancel">取消</button>
       <button class="btn btn-primary" id="renameOk">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 文件夹选择弹窗（上传/批量移动共用） -->
+<div class="modal hide" id="folderSelectModal">
+  <div class="modal-box">
+    <h3 id="folderSelectTitle">选择目标文件夹</h3>
+    <div id="modalTreeWrap"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-gray" id="folderSelectCancel">取消</button>
+      <button class="btn btn-primary" id="folderSelectOk">确认</button>
     </div>
   </div>
 </div>
@@ -319,7 +345,10 @@ let selectedItems = new Set();
 let searchText = "";
 let ctxTarget = null;
 let renameType = "";
-const expandSet = new Set(["root"]);
+const expandSet = new Set();
+let folderSelectCallback = null;
+let selectedTargetFolderId = null;
+window.modalExpandSet = new Set(["root"]);
 
 const sidebar = document.getElementById('sidebar');
 const sidebarMask = document.getElementById('sidebarMask');
@@ -354,12 +383,12 @@ function uuid(){return crypto.randomUUID()}
 async function init(){
   await openDB();
   const folders = await getFoldersByParent("root");
-  if(!folders.find(f=>f.name==="未分类")){
-    await addFolder({id:uuid(),name:"未分类",parentId:"root",system:true})
+  // 替换为【默认收藏夹】
+  if(!folders.find(f=>f.name==="默认收藏夹")){
+    await addFolder({id:uuid(),name:"默认收藏夹",parentId:"root",system:true})
   }
   renderTree();
   render();
-  // ✔修复service‑worker注册
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('service-worker.js');
   }
@@ -429,7 +458,7 @@ async function getAllFiles(){
   })
 }
 
-// 树形渲染 支持无限层级 A→a b
+// 树形渲染（侧边栏）根节点初始折叠，点+-展开/折叠，点文字进入目录
 async function renderTree(){
   const wrap = document.getElementById("treeWrap");
   const allFolders = await getAllFolders();
@@ -442,7 +471,7 @@ async function renderTree(){
       const isActive = currentPath.at(-1) === item.id;
       html += `<div class="tree-item tree-indent" style="padding-left:${level*18}px">
         <div class="tree-line ${isActive?'tree-active':''}" data-fid="${item.id}" data-fname="${item.name}">
-          <span class="tree-toggle">${hasChild ? (isExpand ? "−" : "+") : " "}</span>
+          <span class="tree-toggle" data-toggle-id="${item.id}">${hasChild ? (isExpand ? "−" : "+") : " "}</span>
           <span>📁</span>
           <span class="tree-name">${item.name}</span>
         </div>
@@ -455,7 +484,7 @@ async function renderTree(){
   }
   let treeHtml = `<div class="tree-item">
     <div class="tree-line ${currentPath.at(-1)==='root'?'tree-active':''}" data-fid="root" data-fname="全部文件">
-      <span class="tree-toggle">−</span>
+      <span class="tree-toggle" data-toggle-id="root">+</span>
       <span>📂</span>
       <span class="tree-name">全部文件</span>
     </div>
@@ -464,10 +493,16 @@ async function renderTree(){
   wrap.innerHTML = treeHtml;
 
   wrap.querySelectorAll(".tree-line").forEach(el=>{
+    el.querySelector(".tree-toggle").onclick = async (e)=>{
+      e.stopPropagation();
+      const tid = e.target.dataset.toggleId;
+      if(expandSet.has(tid)) expandSet.delete(tid);
+      else expandSet.add(tid);
+      renderTree();
+    }
     el.onclick = async ()=>{
       const fid = el.dataset.fid;
       const allFolders = await getAllFolders();
-      // 重建完整路径
       if(fid === "root"){
         currentPath = ["root"];
       }else{
@@ -479,16 +514,77 @@ async function renderTree(){
         }
         currentPath = ["root", ...pathArr];
       }
-      // 切换展开折叠
-      const childs = allFolders.filter(x=>x.parentId === fid);
-      if(childs.length>0){
-        expandSet.has(fid) ? expandSet.delete(fid) : expandSet.add(fid);
-      }
-      // 点击树节点自动关闭侧边栏
       sidebar.classList.remove('open');
       sidebarMask.classList.remove('open');
       renderTree();
       render();
+    }
+  })
+}
+
+// 弹窗内文件夹树（用于上传、批量移动）
+async function renderModalTree(){
+  const wrap = document.getElementById("modalTreeWrap");
+  const allFolders = await getAllFolders();
+  const expandModal = window.modalExpandSet;
+
+  function renderNode(parentId,level=0){
+    const children = allFolders.filter(f=>f.parentId===parentId);
+    let html = "";
+    for(const item of children){
+      const hasChild = allFolders.some(x=>x.parentId===item.id);
+      const isExpand = expandModal.has(item.id);
+      html += `<div class="tree-modal-item" style="padding-left:${level*18}px">
+        <div class="tree-modal-line" data-fid="${item.id}">
+          <span class="tree-toggle-modal" data-toggle-id="${item.id}">${hasChild ? (isExpand ? "−" : "+") : " "}</span>
+          <span class="tree-name-modal" data-toggle-id="${item.id}">📁 ${item.name}</span>
+        </div>
+      </div>`;
+      if(isExpand && hasChild){
+        html += renderNode(item.id, level+1);
+      }
+    }
+    return html;
+  }
+  let html = `
+    <button class="btn btn-primary" id="modalNewFolder" style="margin-bottom:10px;">+ 新建文件夹</button>
+    <div class="tree-modal-item">
+      <div class="tree-modal-line" data-fid="root">
+        <span class="tree-toggle-modal" data-toggle-id="root">−</span>
+        <span class="tree-name-modal" data-toggle-id="root">📂 全部文件</span>
+      </div>
+    </div>`
+  html += renderNode("root",0);
+  wrap.innerHTML = html;
+
+  // 弹窗新建文件夹按钮事件
+  document.getElementById("modalNewFolder").onclick = async () => {
+    const targetParentId = selectedTargetFolderId || "root";
+    const folderName = prompt("输入新文件夹名称");
+    if(!folderName?.trim()) return;
+    const newFolder = {
+      id: uuid(),
+      name: folderName.trim(),
+      parentId: targetParentId,
+      system: false
+    };
+    await addFolder(newFolder);
+    await renderModalTree();
+  }
+
+  wrap.querySelectorAll(".tree-modal-line").forEach(el=>{
+    el.onclick=(e)=>{
+      // 点击加减号 / 文件夹文字，都触发折叠展开
+      if(e.target.classList.contains("tree-toggle-modal") || e.target.classList.contains("tree-name-modal")){
+        const tid = e.target.dataset.toggleId;
+        if(expandModal.has(tid)) expandModal.delete(tid);
+        else expandModal.add(tid);
+        renderModalTree();
+        return;
+      }
+      selectedTargetFolderId = el.dataset.fid;
+      wrap.querySelectorAll(".tree-modal-line").forEach(l=>l.style.background="");
+      el.style.background="#eef2ff";
     }
   })
 }
@@ -498,6 +594,8 @@ async function render(){
   const parentId = currentPath.at(-1);
   let folders = await getFoldersByParent(parentId);
   let files = await getFilesByParent(parentId);
+  // 首页root目录不展示文件夹，只在侧边栏显示
+  if(parentId === "root") folders = [];
   if(searchText.trim()!==""){
     const allFolders = await getAllFolders();
     const allFiles = await getAllFiles();
@@ -603,6 +701,7 @@ function showCtxMenu(e,target){
   const menu = document.getElementById("ctxMenu");
   menu.innerHTML = `
     <button id="ctxRename">重命名</button>
+    ${target.type==="file" ? `<button id="ctxDownload">下载</button>`:""}
     <button id="ctxDel">删除</button>
   `;
   menu.classList.remove("hide");
@@ -611,6 +710,12 @@ function showCtxMenu(e,target){
   document.getElementById("ctxRename").onclick=()=>{
     openRename(target);
     menu.classList.add("hide");
+  }
+  if(target.type === "file"){
+    document.getElementById("ctxDownload").onclick = ()=>{
+      saveAs(target.data.blob, target.data.name);
+      menu.classList.add("hide");
+    }
   }
   document.getElementById("ctxDel").onclick=async()=>{
     if(target.type==="folder") await delFolder(target.data.id);
@@ -638,28 +743,56 @@ document.getElementById("renameOk").onclick=async()=>{
   render();
 }
 
-// ✔修复上传：上传文件固定存入【未分类】文件夹
+// 文件上传逻辑：选文件后弹窗选择目标文件夹，默认【默认收藏夹】
 document.getElementById("selectFileBtn").onclick=()=>document.getElementById("fileInput").click();
 document.getElementById("fileInput").onchange=async(e)=>{
   const fileList = e.target.files;
-  const rootFolders = await getFoldersByParent("root");
-  const unclassified = rootFolders.find(f=>f.name === "未分类");
-  for(const file of fileList){
-    const blobUrl = URL.createObjectURL(file);
-    await addFile({
-      id:uuid(),
-      name:file.name,
-      type:file.type,
-      size:file.size,
-      blob:file,
-      blobUrl:blobUrl,
-      parentId: unclassified.id
-    })
+  if(!fileList.length) return;
+  document.getElementById("folderSelectTitle").innerText = "选择上传目标文件夹";
+  document.getElementById("folderSelectModal").classList.remove("hide");
+  selectedTargetFolderId = null;
+  await renderModalTree();
+  folderSelectCallback = async (targetId)=>{
+    const targetPid = targetId ?? (await getDefaultFolderId());
+    for(const file of fileList){
+      const blobUrl = URL.createObjectURL(file);
+      await addFile({
+        id:uuid(),
+        name:file.name,
+        type:file.type,
+        size:file.size,
+        blob:file,
+        blobUrl:blobUrl,
+        parentId: targetPid
+      })
+    }
+    document.getElementById("fileInput").value="";
+    render();
   }
-  document.getElementById("fileInput").value="";
-  render();
 }
 document.getElementById("uploadClear").onclick=()=>document.getElementById("fileInput").value="";
+
+async function getDefaultFolderId(){
+  const rootFolders = await getFoldersByParent("root");
+  const def = rootFolders.find(f=>f.name === "默认收藏夹");
+  return def.id;
+}
+
+// 文件夹选择弹窗确认/取消
+document.getElementById("folderSelectOk").onclick=async ()=>{
+  if(folderSelectCallback){
+    await folderSelectCallback(selectedTargetFolderId);
+    folderSelectCallback = null;
+  }
+  document.getElementById("folderSelectModal").classList.add("hide");
+}
+document.getElementById("folderSelectCancel").onclick=()=>{
+  if(folderSelectCallback){
+    folderSelectCallback(null);
+    folderSelectCallback = null;
+  }
+  document.getElementById("folderSelectModal").classList.add("hide");
+}
 
 // 搜索
 document.getElementById("search").oninput=e=>{
@@ -672,17 +805,20 @@ document.getElementById("searchClear").onclick=()=>{
   render();
 }
 
-//批量
+//全选
 document.getElementById("selectAll").onclick=async()=>{
   document.querySelectorAll(".checkbox-item").forEach(cb=>{
     cb.checked = true;
     selectedItems.add(cb.closest(".item").dataset.id);
   })
 }
+
+//批量删除
 document.getElementById("batchDel").onclick=async()=>{
   for(const id of selectedItems){
     const f = await getFileById(id);
-    f ? await delFile(id) : await delFolder(id);
+    if(f) await delFile(id);
+    else await delFolder(id);
   }
   render();
 }
@@ -693,30 +829,64 @@ async function getFileById(id){
     req.onsuccess=()=>res(req.result)
   })
 }
+async function getFolderById(id){
+  return new Promise(res=>{
+    const tx = db.transaction("folders");
+    const req = tx.objectStore("folders").get(id);
+    req.onsuccess=()=>res(req.result)
+  })
+}
+
+//批量下载
 document.getElementById("batchDownload").onclick=async()=>{
   const zip = new JSZip();
+  async function addItemToZip(itemId, zipFolder){
+    const file = await getFileById(itemId);
+    if(file){
+      zipFolder.file(file.name, file.blob);
+      return;
+    }
+    const folder = await getFolderById(itemId);
+    if(!folder) return;
+    const subZip = zipFolder.folder(folder.name);
+    const subFiles = await getFilesByParent(folder.id);
+    const subFolders = await getFoldersByParent(folder.id);
+    for(const sf of subFiles) subZip.file(sf.name, sf.blob);
+    for(const sfd of subFolders) await addItemToZip(sfd.id, subZip);
+  }
   for(const id of selectedItems){
-    const f = await getFileById(id);
-    if(f) zip.file(f.name,f.blob);
+    await addItemToZip(id, zip);
   }
   const blob = await zip.generateAsync({type:"blob"});
   saveAs(blob,"批量文件.zip");
 }
+
+//批量移动，弹窗树形选择文件夹（修复原来失效问题）
 document.getElementById("batchMove").onclick=async()=>{
-  const allFolders = await getAllFolders();
-  const targetId = prompt("输入目标文件夹ID\n全部文件夹列表：\n"+allFolders.map(x=>x.name+" | "+x.id).join("\n"));
-  if(!targetId) return;
-  for(const id of selectedItems){
-    const f = await getFileById(id);
-    if(f){
-      f.parentId = targetId;
-      await updateFile(f);
+  document.getElementById("folderSelectTitle").innerText = "批量移动至";
+  document.getElementById("folderSelectModal").classList.remove("hide");
+  selectedTargetFolderId = null;
+  await renderModalTree();
+  folderSelectCallback = async (targetId)=>{
+    if(!targetId) return;
+    for(const id of selectedItems){
+      const f = await getFileById(id);
+      if(f){
+        f.parentId = targetId;
+        await updateFile(f);
+      }else{
+        const fd = await getFolderById(id);
+        if(fd) {
+          fd.parentId = targetId;
+          await updateFolder(fd);
+        }
+      }
     }
+    render();
   }
-  render();
 }
 
-// ✔支持创建子文件夹：在当前打开目录下新建子文件夹
+//新建文件夹
 document.getElementById("newFolder").onclick=async()=>{
   const name = prompt("新建文件夹名称");
   if(!name) return;
