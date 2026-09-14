@@ -1,0 +1,78 @@
+◜ ᴥ ◝ 云端文件库 v5 使用说明
+
+一、是不是把 HTML 上传 GitHub Pages 就可以？
+可以，但 HTML 本身只是“网页界面”。
+这版文件已经改成“云端存储架构”，所以 GitHub Pages 负责打开网页，Supabase Storage 负责真正保存文件。
+
+也就是说：
+GitHub Pages = 网站
+Supabase = 文件仓库 + 文件目录
+
+二、首次设置
+1. 注册/登录 Supabase。
+2. 新建一个 Project。
+3. 在 Storage 创建一个 Bucket，例如：
+   files
+4. 建立一个数据库表 folders：
+   - id uuid primary key default gen_random_uuid()
+   - name text not null
+   - parent_path text not null default ''
+   - created_at timestamptz default now()
+   - updated_at timestamptz default now()
+
+5. 建立一个数据库表 files：
+   - id uuid primary key default gen_random_uuid()
+   - name text not null
+   - folder_path text not null default ''
+   - size bigint not null default 0
+   - mime_type text
+   - storage_path text not null
+   - updated_at timestamptz default now()
+
+6. 这两个表要开启 RLS，并给你使用的账号建立相应权限。
+   最安全的做法是配合 Supabase Auth，只允许你自己的账号访问。
+   不要把 service_role key 写进 HTML。
+
+三、网页设置
+打开网页 → 右上角 ⚙
+填写：
+Project URL
+Anon / Publishable Key
+Bucket 名称
+
+保存后连接。
+
+四、重要
+“能存多少存多少”最终取决于你选择的云存储服务的容量、单文件限制、带宽和费用。
+这版不再使用浏览器 IndexedDB 保存文件，所以不会再出现之前那种“浏览器存储空间不足”的根本性限制。
+
+五、目前已经包含
+- 珍珠白 + 很浅淡的青绿色统一色调
+- ◜ ᴥ ◝ 名称
+- 侧边栏文件夹点击只展开/折叠
+- 左上角按钮才关闭侧边栏
+- 无限层级文件夹
+- 侧边栏长按文件夹：重命名 / 新建子文件夹 / 移动 / 删除
+- 文件长按：查看 / 下载 / 重命名 / 移动 / 删除
+- 批量选择
+- 批量下载
+- 批量移动
+- 批量删除
+- 首页查看 / 下载
+- 搜索
+- 拖拽批量上传
+- 多选批量上传
+- 预览图片、视频、音频、PDF、文本类文件
+- download / dl / 下载 命令
+- 名称、修改时间、大小、类型排序
+- 目录备份/恢复
+
+六、关于“秒传”
+当前网页已经预留了云端存储架构，但“真正秒传”要进一步增加文件 SHA-256 哈希检查：
+如果云端已有完全相同的文件，就不再重复上传。
+下一步可以继续把这个做进去。
+
+七、关于“秒下载/不限速”
+网页本身不能凭空创造无限带宽。
+实际速度由云存储服务、网络、地区、浏览器和文件大小共同决定。
+这版下载直接走云端签名 URL，不再先把整个文件读进浏览器再生成本地 Blob，因此比原来的浏览器本地方案更适合大文件。
