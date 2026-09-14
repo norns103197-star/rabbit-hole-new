@@ -1,908 +1,484 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>◜ ᴥ  ◝</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ffffff">
-<link rel="icon" href="./icon.png">
-<link rel="apple-touch-icon" href="./icon.png">
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Small tools</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system}
-body{background:#f5f7fa;color:#222;overflow-x:hidden;}
-.wrapper{display:flex;min-height:100vh;position:relative;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,"PingFang SC","Helvetica Neue",Arial,sans-serif;}
+body{background:#f7f8fa;color:#222;min-height:100vh;padding:16px;}
+header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.menu-btn{width:44px;height:44px;border:none;background:#fff;border-radius:12px;font-size:22px;box-shadow:0 1px 3px #0002;}
+.search-wrap{flex:1;position:relative;}
+.search-wrap input{width:100%;padding:12px 40px 12px 16px;border-radius:99px;border:1px solid #e5e7eb;font-size:16px;background:#fff;}
+.search-wrap .close{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:none;font-size:20px;color:#999;}
 
-/* 侧边栏 默认隐藏，左侧滑入 */
-.sidebar{
-  width:280px;
-  background:#fff;
-  border-right:1px solid #e5e7eb;
-  padding:16px;
-  overflow:auto;
-  height:100vh;
-  position:fixed;
-  top:0;
-  left:-280px;
-  transition: left 0.3s ease;
-  z-index:100;
-  display:flex;
-  flex-direction:column;
-}
-.sidebar.open{
-  left:0;
-}
-.sidebar-mask{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.4);
-  z-index:99;
-}
-.sidebar-mask.open{
-  display:block;
-}
+/* 侧边栏 */
+.sidebar{position:fixed;top:0;left:-280px;width:280px;height:100vh;background:#fff;z-index:20;transition:left 0.25s;padding:24px 16px;box-shadow:2px 0 10px #0002;overflow-y:auto;}
+.sidebar.open{left:0;}
+.mask{position:fixed;inset:0;background:#0004;z-index:19;display:none;}
+.mask.open{display:block;}
+.folder-root{margin-bottom:16px;}
+.top-add-row{display:flex;align-items:center;gap:6px;padding:8px 4px;font-size:18px;font-weight:bold;cursor:pointer;}
+.add-icon{font-size:22px;color:#222;}
+.folder-item{padding:10px 6px;border-radius:8px;cursor:pointer;margin:4px 0;display:flex;align-items:center;gap:8px;}
+.folder-item:hover{background:#f1f1f1;}
+.folder-item.selected{background:#e9edff;}
+.sub-file-list{padding-left:24px;margin:4px 0 12px 0;}
+.sub-file-item{padding:6px 4px;font-size:14px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-.sidebar-header{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-bottom:20px;
-  padding-bottom:12px;
-  border-bottom:1px solid #eee;
-}
-.sidebar-header .avatar{
-  width:32px;
-  height:32px;
-  border-radius:8px;
-  object-fit:cover;
-}
-.sidebar-header h2{font-size:20px;font-weight:normal;}
-#treeWrap{
-  flex:1;
-  overflow:auto;
-}
-.tree-item{margin:6px 0;}
-.tree-line{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding:7px 6px;
-  border-radius:8px;
-  cursor:pointer;
-}
-.tree-line:hover{background:#f3f4f6}
-.tree-indent{margin-left:18px}
-.tree-toggle{width:22px;text-align:center;font-size:14px;color:#666;cursor:pointer}
-.tree-name{flex:1}
-.tree-active{background:#eef2ff;color:#2563eb}
-.new-folder-btn{
-  width:100%;
-  padding:10px;
-  border-radius:99px;
-  border:1px solid #ddd;
-  background:#fff;
-  margin-top:16px;
-  font-size:15px;
-  cursor:pointer;
-  flex-shrink:0;
-}
+/* 上传区域 */
+.upload-area{border:2px dashed #ccd1e0;border-radius:16px;padding:30px 16px;text-align:center;margin-bottom:24px;background:#fff;}
+.upload-icon{font-size:48px;color:#9ca3af;margin-bottom:8px;}
+.upload-buttons{display:flex;gap:16px;justify-content:center;margin:16px 0;flex-wrap:wrap;}
+.btn-dark{background:#111827;color:white;border:none;padding:14px 28px;border-radius:99px;font-size:16px;}
+.btn-gray{background:#efefef;color:#333;border:none;padding:14px 28px;border-radius:99px;font-size:16px;}
+.btn-red{background:#dc2626;color:#fff;border:none;padding:14px 28px;border-radius:99px;font-size:16px;}
+.btn-blue{background:#2563eb;color:#fff;border:none;padding:14px 28px;border-radius:99px;font-size:16px;}
+.file-list{margin:12px 0;text-align:left;max-height:220px;overflow:auto;}
+.file-line{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:#eee 1px solid;}
+.del-x{color:#ef4444;border:none;background:none;font-size:22px;padding:0 8px;}
+.confirm-upload{margin-top:12px;}
+.upload-tip{color:#22a848;font-weight:bold;margin-top:10px;height:24px;}
 
-.main{
-  flex:1;
-  padding:16px;
-  padding-bottom:80px;
-  width:100%;
-}
-.top-bar{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-bottom:16px;
-}
-.menu-btn{
-  border:none;
-  background:#fff;
-  width:36px;
-  height:36px;
-  border-radius:8px;
-  font-size:20px;
-  cursor:pointer;
-}
-.search-wrap{flex:1;position:relative}
-#search{
-  width:100%;
-  padding:10px 36px 10px 12px;
-  border:1px solid #ddd;
-  border-radius:99px;
-  font-size:16px;
-}
-.search-clear{
-  position:absolute;
-  right:10px;
-  top:50%;
-  transform:translateY(-50%);
-  font-size:22px;
-  color:#888;
-  border:none;
-  background:transparent;
-  cursor:pointer;
-}
-.breadcrumb{
-  display:flex;
-  gap:6px;
-  align-items:center;
-  margin-bottom:14px;
-  font-size:14px;
-  color:#444;
-  flex-wrap:wrap;
-}
-.breadcrumb a{color:#2563eb;text-decoration:none;cursor:pointer}
-.upload-area{
-  border:2px dashed #c9d4e3;
-  border-radius:14px;
-  padding:30px 16px;
-  text-align:center;
-  margin-bottom:16px;
-}
-.upload-icon{font-size:40px;color:#64748b;margin-bottom:8px}
-.upload-buttons{
-  display:flex;
-  gap:12px;
-  justify-content:center;
-  margin-top:14px;
-}
-.btn{
-  padding:10px 20px;
-  border-radius:99px;
-  border:none;
-  font-size:16px;
-  cursor:pointer;
-}
-.btn-primary{background:#111827;color:#fff}
-.btn-gray{background:#e5e7eb;color:#222}
-.btn-red{background:#dc2626;color:#fff}
-.btn-blue{background:#2563eb;color:#fff}
-.operate-bar{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-bottom:16px;
-}
-.folder-list,.file-list{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
-  gap:12px;
-}
-.item{
-  background:#fff;
-  border-radius:12px;
-  padding:10px;
-  text-align:center;
-  box-shadow:0 1px 3px #00000017;
-  cursor:pointer;
-  position:relative;
-}
-.item-img{
-  width:100%;
-  height:90px;
-  object-fit:contain;
-  border-radius:8px;
-  background:#f1f5f9;
-}
-.item-name{margin-top:6px;font-size:14px;word-break:break-all}
-.item-ctx{
-  position:absolute;
-  right:4px;
-  top:4px;
-  background:#00000022;
-  border:none;
-  border-radius:50%;
-  width:24px;
-  height:24px;
-}
-.ctx-menu{
-  position:fixed;
-  background:#fff;
-  box-shadow:0 4px 12px #0003;
-  border-radius:10px;
-  padding:8px;
-  z-index:999;
-}
-.ctx-menu button{
-  display:block;
-  width:100%;
-  text-align:left;
-  padding:8px 12px;
-  border:none;
-  background:none;
-  font-size:15px;
-  cursor:pointer;
-}
-.ctx-menu button:hover{background:#f3f4f6}
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.66);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-.modal-box{
-  background:#fff;
-  padding:20px;
-  border-radius:14px;
-  width:90%;
-  max-width:420px;
-  max-height:80vh;
-  overflow:auto;
-}
-.modal input{
-  width:100%;
-  padding:10px;
-  margin:12px 0;
-  border:1px solid #ddd;
-  border-radius:8px;
-  font-size:16px;
-}
-.modal-buttons{
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-  margin-top:12px;
-}
-.hide{display:none !important}
-.checkbox-item{
-  position:absolute;
-  left:6px;
-  top:6px;
-  width:18px;
-  height:18px;
-}
-.tree-modal-item{margin:4px 0}
-.tree-modal-line{padding:6px;cursor:pointer;border-radius:6px}
-.tree-modal-line:hover{background:#eef2ff}
-.tree-name-modal{cursor:pointer}
+/* 排序下拉 */
+.sort-bar{background:#fff;padding:12px 16px;border-radius:16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+select{padding:8px;border-radius:8px;border:1px solid #ddd;font-size:15px;}
+
+/* 批量按钮区 */
+.batch-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+
+/* 文件列表 */
+.file-container{background:#fff;border-radius:16px;padding:16px;margin-bottom:20px;}
+.file-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #eee;}
+input[type=checkbox]{width:20px;height:20px;}
+
+/* 指令输入框 */
+.cmd-input{width:100%;padding:12px 16px;border-radius:12px;border:1px solid #ddd;margin-top:10px;font-size:16px;}
+
+/* 弹窗 */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0005;z-index:30;padding:16px;}
+.modal.open{display:flex;}
+.modal-box{background:#fff;border-radius:20px;width:100%;max-width:420px;padding:24px;}
+.modal h3{margin-bottom:16px;}
+.modal-folder-list{max-height:300px;overflow:auto;margin:16px 0;}
+.modal-btn-row{display:flex;gap:12px;margin-top:24px;justify-content:flex-end;}
+
+/* 导入导出 */
+.backup-row{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;}
 </style>
 </head>
 <body>
-<div class="wrapper">
-  <div class="sidebar-mask" id="sidebarMask"></div>
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img class="avatar" src="./icon.png">
-      <h2>◜ ᴥ  ◝</h2>
-    </div>
-    <div id="treeWrap"></div>
-    <button class="new-folder-btn" id="sidebarNewFolder">+ 新建文件夹</button>
-  </div>
+<header>
+<button class="menu-btn" id="openSide">☰</button>
+<div class="search-wrap">
+<input type="text" id="searchInp" placeholder="搜索全部文件/文件夹">
+<button class="close">×</button>
+</div>
+</header>
 
-  <div class="main">
-    <div class="top-bar">
-      <button class="menu-btn" id="menuBtn">☰</button>
-      <div class="search-wrap">
-        <input id="search" placeholder="搜索全部文件/文件夹">
-        <button class="search-clear" id="searchClear">×</button>
-      </div>
+<!--排序栏-->
+<div class="sort-bar">
+  <span>排序：</span>
+  <select id="sortKeySelect">
+    <option value="name">文件名称</option>
+    <option value="size">文件大小</option>
+    <option value="time">修改时间</option>
+    <option value="type">文件类型</option>
+  </select>
+  <select id="sortOrderSelect">
+    <option value="asc">正序</option>
+    <option value="desc">倒序</option>
+  </select>
+</div>
+
+<!-- 侧边栏 -->
+<div class="mask" id="mask"></div>
+<div class="sidebar" id="sidebar">
+  <div class="folder-root">
+    <div class="top-add-row" id="addFolderBtn">
+      <span class="add-icon">+</span>
+      <span>全部文件</span>
     </div>
-    <div class="breadcrumb" id="breadcrumb"></div>
-    <div class="upload-area">
-      <div class="upload-icon">📁</div>
-      <div>点击选择文件</div>
-      <input type="file" id="fileInput" multiple class="hide">
-      <div class="upload-buttons">
-        <button class="btn btn-primary" id="selectFileBtn">选择文件</button>
-        <button class="btn btn-gray" id="uploadClear">清空</button>
-      </div>
-    </div>
-    <div class="operate-bar">
-      <button class="btn btn-gray" id="selectAll">全选</button>
-      <button class="btn btn-blue" id="batchMove">批量移动</button>
-      <button class="btn btn-blue" id="batchDownload">批量下载</button>
-      <button class="btn btn-red" id="batchDel">批量删除</button>
-      <button class="btn btn-primary" id="newFolder">新建文件夹</button>
-    </div>
-    <div id="folderList" class="folder-list"></div>
-    <div id="fileList" class="file-list"></div>
+    <div id="folderListSide"></div>
   </div>
 </div>
 
-<div class="ctx-menu hide" id="ctxMenu"></div>
+<!-- 上传区域 -->
+<div class="upload-area">
+<div class="upload-icon">📁</div>
+<div>点击选择文件</div>
+<div class="upload-buttons">
+<button class="btn-dark" id="selectFileBtn">选择文件</button>
+<button class="btn-gray" id="clearFileBtn">清空</button>
+</div>
+<div class="file-list" id="pendingFileList"></div>
+<div class="confirm-upload">
+<button class="btn-dark" id="confirmUploadBtn">确认上传</button>
+</div>
+<div class="upload-tip" id="uploadTip"></div>
+<input type="file" id="nativeFileInp" multiple style="display:none">
+</div>
+
+<!-- 批量按钮 -->
+<div class="batch-row">
+<button class="btn-gray" id="selectAllBtn">全选</button>
+<button class="btn-blue" id="batchMoveBtn">批量移动</button>
+<button class="btn-blue" id="batchDownloadBtn">批量下载</button>
+<button class="btn-red" id="batchDelBtn">批量删除</button>
+<button class="btn-dark" id="newFolderBtn">新建文件夹</button>
+</div>
+
+<!-- 文件列表 -->
+<div class="file-container" id="mainFileList"></div>
+
+<!-- 指令输入 -->
+<input class="cmd-input" id="cmdInput" placeholder="输入 download / dl / 下载 回车执行">
+
+<!-- 备份导入导出 -->
+<div class="backup-row">
+<button class="btn-gray" id="exportBtn">导出备份</button>
+<button class="btn-gray" id="importBtn">导入备份</button>
+<input type="file" id="importFile" style="display:none">
+</div>
+
+<!-- 弹窗：选择上传目标文件夹 -->
+<div class="modal" id="folderSelectModal">
+<div class="modal-box">
+<h3>选择目标文件夹</h3>
+<button class="btn-dark" id="modalNewFolder">+ 新建文件夹</button>
+<div class="modal-folder-list" id="modalFolderList"></div>
+<div class="modal-btn-row">
+<button class="btn-gray" id="modalCancel">取消</button>
+<button class="btn-dark" id="modalConfirm">确认</button>
+</div>
+</div>
+</div>
 
 <!-- 重命名弹窗 -->
-<div class="modal hide" id="renameModal">
-  <div class="modal-box">
-    <h3>重命名</h3>
-    <input id="renameInput">
-    <div class="modal-buttons">
-      <button class="btn btn-gray" id="renameCancel">取消</button>
-      <button class="btn btn-primary" id="renameOk">确认</button>
-    </div>
-  </div>
+<div class="modal" id="renameModal">
+<div class="modal-box">
+<h3>重命名</h3>
+<input type="text" id="renameInp" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd">
+<div class="modal-btn-row">
+<button class="btn-gray" id="renameCancel">取消</button>
+<button class="btn-dark" id="renameOk">确认</button>
 </div>
-
-<!-- 文件夹选择弹窗（上传/批量移动共用） -->
-<div class="modal hide" id="folderSelectModal">
-  <div class="modal-box">
-    <h3 id="folderSelectTitle">选择目标文件夹</h3>
-    <div id="modalTreeWrap"></div>
-    <div class="modal-buttons">
-      <button class="btn btn-gray" id="folderSelectCancel">取消</button>
-      <button class="btn btn-primary" id="folderSelectOk">确认</button>
-    </div>
-  </div>
+</div>
 </div>
 
 <script>
-const DB_NAME = "LocalFileDB";
-const DB_VERSION = 1;
-let db;
-let currentPath = ["root"];
-let selectedItems = new Set();
-let searchText = "";
-let ctxTarget = null;
-let renameType = "";
-const expandSet = new Set();
-let folderSelectCallback = null;
-let selectedTargetFolderId = null;
-window.modalExpandSet = new Set(["root"]);
+// 数据
+const STORAGE_KEY = "smalltool_file_data";
+let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+  folders:[
+    {id:"all",name:"全部文件",expand:true},
+    {id:"food",name:"食色性也",expand:true},
+    {id:"star",name:"默认收藏夹",expand:true},
+    {id:"uncat",name:"未分类",expand:true}
+  ],
+  files:[]
+};
+let pendingFiles = [];
+let selectedFolderModal = null;
+let renameTarget = null;
+let activeFilterFolderId = null;
 
-const sidebar = document.getElementById('sidebar');
-const sidebarMask = document.getElementById('sidebarMask');
-const menuBtn = document.getElementById('menuBtn');
+// DOM
+const $ = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
 
-menuBtn.onclick = ()=>{
-  sidebar.classList.add('open');
-  sidebarMask.classList.add('open');
+//排序监听
+$("#sortKeySelect").onchange = renderMainFileList;
+$("#sortOrderSelect").onchange = renderMainFileList;
+
+//侧边栏
+$("#openSide").onclick = ()=>{$("#sidebar").classList.add("open");$("#mask").classList.add("open");}
+$("#mask").onclick = ()=>{$("#sidebar").classList.remove("open");$("#mask").classList.remove("open");}
+
+//顶部加号新建文件夹
+$("#addFolderBtn").onclick = ()=>{
+  const name = prompt("输入新建文件夹名称");
+  if(!name)return;
+  const id = "fd_"+Date.now();
+  data.folders.push({id,name,expand:true});
+  saveData();renderSideFolder();
 }
-sidebarMask.onclick = ()=>{
-  sidebar.classList.remove('open');
-  sidebarMask.classList.remove('open');
-}
 
-async function openDB(){
-  return new Promise((res,rej)=>{
-    const req = indexedDB.open(DB_NAME,DB_VERSION);
-    req.onupgradeneeded = e=>{
-      db = e.target.result;
-      db.createObjectStore("folders",{keyPath:"id"});
-      db.createObjectStore("files",{keyPath:"id"});
-    };
-    req.onsuccess = e=>{
-      db = e.target.result;
-      res(db);
-    };
-    req.onerror = e=>rej(e);
+//选择文件
+$("#selectFileBtn").onclick = ()=>$("#nativeFileInp").click();
+$("#nativeFileInp").onchange = e=>{
+  for(let f of e.target.files) pendingFiles.push(f);
+  renderPendingList();
+}
+$("#clearFileBtn").onclick = ()=>{pendingFiles=[];renderPendingList();}
+
+//渲染待上传列表
+function renderPendingList(){
+  const wrap = $("#pendingFileList");
+  wrap.innerHTML = "";
+  pendingFiles.forEach((file,idx)=>{
+    const line = document.createElement("div");
+    line.className = "file-line";
+    line.innerHTML = `<span>${file.name}</span><button class="del-x" data-idx="${idx}">×</button>`;
+    wrap.appendChild(line);
   })
-}
-function uuid(){return crypto.randomUUID()}
-
-async function init(){
-  await openDB();
-  const folders = await getFoldersByParent("root");
-  // 替换为【默认收藏夹】
-  if(!folders.find(f=>f.name==="默认收藏夹")){
-    await addFolder({id:uuid(),name:"默认收藏夹",parentId:"root",system:true})
-  }
-  renderTree();
-  render();
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('service-worker.js');
-  }
-}
-
-// Folder CRUD
-async function addFolder(f){
-  const tx = db.transaction("folders","readwrite");
-  tx.objectStore("folders").add(f);
-  await tx.complete;
-}
-async function getFoldersByParent(pid){
-  return new Promise(res=>{
-    const tx = db.transaction("folders");
-    const store = tx.objectStore("folders");
-    const req = store.getAll();
-    req.onsuccess=()=>res(req.result.filter(i=>i.parentId===pid))
-  })
-}
-async function updateFolder(f){
-  const tx = db.transaction("folders","readwrite");
-  tx.objectStore("folders").put(f);
-  await tx.complete;
-}
-async function delFolder(id){
-  const tx = db.transaction("folders","readwrite");
-  tx.objectStore("folders").delete(id);
-  await tx.complete;
-}
-
-// File CRUD
-async function addFile(f){
-  const tx = db.transaction("files","readwrite");
-  tx.objectStore("files").add(f);
-  await tx.complete;
-}
-async function getFilesByParent(pid){
-  return new Promise(res=>{
-    const tx = db.transaction("files");
-    const store = tx.objectStore("files");
-    const req = store.getAll();
-    req.onsuccess=()=>res(req.result.filter(i=>i.parentId===pid))
-  })
-}
-async function updateFile(f){
-  const tx = db.transaction("files","readwrite");
-  tx.objectStore("files").put(f);
-  await tx.complete;
-}
-async function delFile(id){
-  const tx = db.transaction("files","readwrite");
-  tx.objectStore("files").delete(id);
-  await tx.complete;
-}
-async function getAllFolders(){
-  return new Promise(res=>{
-    const tx = db.transaction("folders");
-    const req = tx.objectStore("folders").getAll();
-    req.onsuccess=()=>res(req.result)
-  })
-}
-async function getAllFiles(){
-  return new Promise(res=>{
-    const tx = db.transaction("files");
-    const req = tx.objectStore("files").getAll();
-    req.onsuccess=()=>res(req.result)
+  $$(".del-x").forEach(b=>b.onclick=e=>{
+    const i = Number(e.target.dataset.idx);
+    pendingFiles.splice(i,1);renderPendingList();
   })
 }
 
-// 树形渲染（侧边栏）根节点初始折叠，点+-展开/折叠，点文字进入目录
-async function renderTree(){
-  const wrap = document.getElementById("treeWrap");
-  const allFolders = await getAllFolders();
-  function renderNode(parentId,level=0){
-    const children = allFolders.filter(f=>f.parentId===parentId);
-    let html = "";
-    for(const item of children){
-      const hasChild = allFolders.some(x=>x.parentId===item.id);
-      const isExpand = expandSet.has(item.id);
-      const isActive = currentPath.at(-1) === item.id;
-      html += `<div class="tree-item tree-indent" style="padding-left:${level*18}px">
-        <div class="tree-line ${isActive?'tree-active':''}" data-fid="${item.id}" data-fname="${item.name}">
-          <span class="tree-toggle" data-toggle-id="${item.id}">${hasChild ? (isExpand ? "−" : "+") : " "}</span>
-          <span>📁</span>
-          <span class="tree-name">${item.name}</span>
-        </div>
-      </div>`;
-      if(isExpand && hasChild){
-        html += renderNode(item.id, level+1);
-      }
-    }
-    return html;
-  }
-  let treeHtml = `<div class="tree-item">
-    <div class="tree-line ${currentPath.at(-1)==='root'?'tree-active':''}" data-fid="root" data-fname="全部文件">
-      <span class="tree-toggle" data-toggle-id="root">+</span>
-      <span>📂</span>
-      <span class="tree-name">全部文件</span>
-    </div>
-  </div>`;
-  treeHtml += renderNode("root",0);
-  wrap.innerHTML = treeHtml;
+//确认上传，打开弹窗
+$("#confirmUploadBtn").onclick = ()=>{
+  if(!pendingFiles.length) return alert("请先选择文件");
+  selectedFolderModal = null;
+  renderModalFolderList();
+  $("#folderSelectModal").classList.add("open");
+}
 
-  wrap.querySelectorAll(".tree-line").forEach(el=>{
-    el.querySelector(".tree-toggle").onclick = async (e)=>{
-      e.stopPropagation();
-      const tid = e.target.dataset.toggleId;
-      if(expandSet.has(tid)) expandSet.delete(tid);
-      else expandSet.add(tid);
-      renderTree();
-    }
-    el.onclick = async ()=>{
-      const fid = el.dataset.fid;
-      const allFolders = await getAllFolders();
-      if(fid === "root"){
-        currentPath = ["root"];
-      }else{
-        let pathArr = [];
-        let cur = allFolders.find(x=>x.id === fid);
-        while(cur){
-          pathArr.unshift(cur.id);
-          cur = allFolders.find(x=>x.id === cur.parentId);
-        }
-        currentPath = ["root", ...pathArr];
-      }
-      sidebar.classList.remove('open');
-      sidebarMask.classList.remove('open');
-      renderTree();
-      render();
-    }
+function renderModalFolderList(){
+  const wrap = $("#modalFolderList");
+  wrap.innerHTML = "";
+  data.folders.forEach(fd=>{
+    const div = document.createElement("div");
+    div.className = "folder-item";
+    if(selectedFolderModal?.id === fd.id) div.classList.add("selected");
+    div.textContent = "📂 "+fd.name;
+    div.onclick = ()=>{selectedFolderModal = fd;renderModalFolderList();}
+    wrap.appendChild(div);
   })
 }
 
-// 弹窗内文件夹树（用于上传、批量移动）
-async function renderModalTree(){
-  const wrap = document.getElementById("modalTreeWrap");
-  const allFolders = await getAllFolders();
-  const expandModal = window.modalExpandSet;
-
-  function renderNode(parentId,level=0){
-    const children = allFolders.filter(f=>f.parentId===parentId);
-    let html = "";
-    for(const item of children){
-      const hasChild = allFolders.some(x=>x.parentId===item.id);
-      const isExpand = expandModal.has(item.id);
-      html += `<div class="tree-modal-item" style="padding-left:${level*18}px">
-        <div class="tree-modal-line" data-fid="${item.id}">
-          <span class="tree-toggle-modal" data-toggle-id="${item.id}">${hasChild ? (isExpand ? "−" : "+") : " "}</span>
-          <span class="tree-name-modal" data-toggle-id="${item.id}">📁 ${item.name}</span>
-        </div>
-      </div>`;
-      if(isExpand && hasChild){
-        html += renderNode(item.id, level+1);
-      }
-    }
-    return html;
-  }
-  let html = `
-    <button class="btn btn-primary" id="modalNewFolder" style="margin-bottom:10px;">+ 新建文件夹</button>
-    <div class="tree-modal-item">
-      <div class="tree-modal-line" data-fid="root">
-        <span class="tree-toggle-modal" data-toggle-id="root">−</span>
-        <span class="tree-name-modal" data-toggle-id="root">📂 全部文件</span>
-      </div>
-    </div>`
-  html += renderNode("root",0);
-  wrap.innerHTML = html;
-
-  // 弹窗新建文件夹按钮事件
-  document.getElementById("modalNewFolder").onclick = async () => {
-    const targetParentId = selectedTargetFolderId || "root";
-    const folderName = prompt("输入新文件夹名称");
-    if(!folderName?.trim()) return;
-    const newFolder = {
-      id: uuid(),
-      name: folderName.trim(),
-      parentId: targetParentId,
-      system: false
-    };
-    await addFolder(newFolder);
-    await renderModalTree();
-  }
-
-  wrap.querySelectorAll(".tree-modal-line").forEach(el=>{
-    el.onclick=(e)=>{
-      // 点击加减号 / 文件夹文字，都触发折叠展开
-      if(e.target.classList.contains("tree-toggle-modal") || e.target.classList.contains("tree-name-modal")){
-        const tid = e.target.dataset.toggleId;
-        if(expandModal.has(tid)) expandModal.delete(tid);
-        else expandModal.add(tid);
-        renderModalTree();
-        return;
-      }
-      selectedTargetFolderId = el.dataset.fid;
-      wrap.querySelectorAll(".tree-modal-line").forEach(l=>l.style.background="");
-      el.style.background="#eef2ff";
-    }
-  })
+//弹窗新建文件夹
+$("#modalNewFolder").onclick = ()=>{
+  const name = prompt("新建文件夹名称");
+  if(!name)return;
+  const id = "fd_"+Date.now();
+  data.folders.push({id,name,expand:true});
+  saveData();renderModalFolderList();renderSideFolder();
 }
 
-async function render(){
-  selectedItems.clear();
-  const parentId = currentPath.at(-1);
-  let folders = await getFoldersByParent(parentId);
-  let files = await getFilesByParent(parentId);
-  // 首页root目录不展示文件夹，只在侧边栏显示
-  if(parentId === "root") folders = [];
-  if(searchText.trim()!==""){
-    const allFolders = await getAllFolders();
-    const allFiles = await getAllFiles();
-    folders = allFolders.filter(x=>x.name.includes(searchText));
-    files = allFiles.filter(x=>x.name.includes(searchText));
-  }
-  renderBreadcrumb();
-  renderFolderList(folders);
-  renderFileList(files);
-  renderTree();
+//弹窗取消：未分类
+$("#modalCancel").onclick = ()=>{
+  $("#folderSelectModal").classList.remove("open");
+  uploadToFolder("uncat");
+}
+$("#modalConfirm").onclick = ()=>{
+  if(!selectedFolderModal) return alert("请选择文件夹");
+  $("#folderSelectModal").classList.remove("open");
+  uploadToFolder(selectedFolderModal.id);
 }
 
-async function renderBreadcrumb(){
-  const wrap = document.getElementById("breadcrumb");
-  const allFolders = await getAllFolders();
-  let html = "";
-  for(let i=0;i<currentPath.length;i++){
-    const pid = currentPath[i];
-    if(pid === "root"){
-      html += `<a data-index="${i}">全部文件</a>`;
-    }else{
-      const f = allFolders.find(x=>x.id === pid);
-      if(f) html += ` / <a data-index="${i}">${f.name}</a>`;
-    }
-  }
-  wrap.innerHTML = html;
-  wrap.querySelectorAll("a").forEach(a=>{
-    a.onclick = ()=>{
-      const idx = Number(a.dataset.index);
-      currentPath = currentPath.slice(0, idx+1);
-      render();
-    }
-  })
-}
-
-async function renderFolderList(folders){
-  const wrap = document.getElementById("folderList");
-  let html = "";
-  for(const f of folders){
-    html += `
-    <div class="item" data-id="${f.id}" data-type="folder">
-      <input type="checkbox" class="checkbox-item">
-      <div class="item-img">📁</div>
-      <div class="item-name">${f.name}</div>
-      <button class="item-ctx">⋮</button>
-    </div>`
-  }
-  wrap.innerHTML = html;
-  wrap.querySelectorAll(".item").forEach(el=>{
-    const itemId = el.dataset.id;
-    const itemType = el.dataset.type;
-    el.onclick = e=>{
-      if(e.target.classList.contains("checkbox-item")||e.target.classList.contains("item-ctx")) return;
-      currentPath.push(itemId);
-      render();
-    }
-    el.querySelector(".item-ctx").onclick = async e=>{
-      e.stopPropagation();
-      const allF = await getAllFolders();
-      const folderObj = allF.find(x=>x.id === itemId);
-      showCtxMenu(e,{type:itemType,data:folderObj});
-    }
-    el.querySelector(".checkbox-item").onchange=()=>{
-      el.querySelector(".checkbox-item").checked ? selectedItems.add(itemId) : selectedItems.delete(itemId);
-    }
-  })
-}
-
-async function renderFileList(files){
-  const wrap = document.getElementById("fileList");
-  let html = "";
-  for(const f of files){
-    let preview = "📄";
-    if(f.type.startsWith("image/")) preview = `<img class="item-img" src="${f.blobUrl}">`;
-    else if(f.type.startsWith("video/")) preview = `<video class="item-img" src="${f.blobUrl}" muted></video>`;
-    else preview = `<div class="item-img">📦</div>`;
-    html += `
-    <div class="item" data-id="${f.id}" data-type="file">
-      <input type="checkbox" class="checkbox-item">
-      ${preview}
-      <div class="item-name">${f.name}</div>
-      <button class="item-ctx">⋮</button>
-    </div>`
-  }
-  wrap.innerHTML = html;
-  wrap.querySelectorAll(".item").forEach(el=>{
-    const itemId = el.dataset.id;
-    const itemType = el.dataset.type;
-    el.querySelector(".item-ctx").onclick = async e=>{
-      e.stopPropagation();
-      const allF = await getAllFiles();
-      const fileObj = allF.find(x=>x.id === itemId);
-      showCtxMenu(e,{type:itemType,data:fileObj});
-    }
-    el.querySelector(".checkbox-item").onchange=()=>{
-      el.querySelector(".checkbox-item").checked ? selectedItems.add(itemId) : selectedItems.delete(itemId);
-    }
-  })
-}
-
-function showCtxMenu(e,target){
-  ctxTarget = target;
-  const menu = document.getElementById("ctxMenu");
-  menu.innerHTML = `
-    <button id="ctxRename">重命名</button>
-    ${target.type==="file" ? `<button id="ctxDownload">下载</button>`:""}
-    <button id="ctxDel">删除</button>
-  `;
-  menu.classList.remove("hide");
-  menu.style.left = `${e.clientX}px`;
-  menu.style.top = `${e.clientY}px`;
-  document.getElementById("ctxRename").onclick=()=>{
-    openRename(target);
-    menu.classList.add("hide");
-  }
-  if(target.type === "file"){
-    document.getElementById("ctxDownload").onclick = ()=>{
-      saveAs(target.data.blob, target.data.name);
-      menu.classList.add("hide");
-    }
-  }
-  document.getElementById("ctxDel").onclick=async()=>{
-    if(target.type==="folder") await delFolder(target.data.id);
-    else await delFile(target.data.id);
-    render();
-    menu.classList.add("hide");
-  }
-}
-document.addEventListener("click",()=>document.getElementById("ctxMenu").classList.add("hide"))
-
-function openRename(target){
-  ctxTarget = target;
-  renameType = target.type;
-  document.getElementById("renameInput").value = target.data.name;
-  document.getElementById("renameModal").classList.remove("hide");
-}
-document.getElementById("renameCancel").onclick=()=>document.getElementById("renameModal").classList.add("hide");
-document.getElementById("renameOk").onclick=async()=>{
-  const newName = document.getElementById("renameInput").value.trim();
-  if(!newName) return;
-  ctxTarget.data.name = newName;
-  if(renameType==="folder") await updateFolder(ctxTarget.data);
-  else await updateFile(ctxTarget.data);
-  document.getElementById("renameModal").classList.add("hide");
-  render();
-}
-
-// 文件上传逻辑：选文件后弹窗选择目标文件夹，默认【默认收藏夹】
-document.getElementById("selectFileBtn").onclick=()=>document.getElementById("fileInput").click();
-document.getElementById("fileInput").onchange=async(e)=>{
-  const fileList = e.target.files;
-  if(!fileList.length) return;
-  document.getElementById("folderSelectTitle").innerText = "选择上传目标文件夹";
-  document.getElementById("folderSelectModal").classList.remove("hide");
-  selectedTargetFolderId = null;
-  await renderModalTree();
-  folderSelectCallback = async (targetId)=>{
-    const targetPid = targetId ?? (await getDefaultFolderId());
-    for(const file of fileList){
-      const blobUrl = URL.createObjectURL(file);
-      await addFile({
-        id:uuid(),
+function uploadToFolder(folderId){
+  const count = pendingFiles.length;
+  pendingFiles.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      data.files.push({
+        id:Date.now()+"_"+Math.random(),
         name:file.name,
-        type:file.type,
+        folder:folderId,
+        data:e.target.result,
         size:file.size,
-        blob:file,
-        blobUrl:blobUrl,
-        parentId: targetPid
+        time:Date.now(),
+        type:file.name.split('.').pop()
       })
+      saveData();
+      renderMainFileList();
+      renderSideFolder();
     }
-    document.getElementById("fileInput").value="";
-    render();
-  }
-}
-document.getElementById("uploadClear").onclick=()=>document.getElementById("fileInput").value="";
-
-async function getDefaultFolderId(){
-  const rootFolders = await getFoldersByParent("root");
-  const def = rootFolders.find(f=>f.name === "默认收藏夹");
-  return def.id;
+    reader.readAsDataURL(file);
+  })
+  $("#uploadTip").innerText = `成功上传 ${count} 个文件`;
+  pendingFiles = [];renderPendingList();
+  setTimeout(()=>$("#uploadTip").innerText="",2500);
 }
 
-// 文件夹选择弹窗确认/取消
-document.getElementById("folderSelectOk").onclick=async ()=>{
-  if(folderSelectCallback){
-    await folderSelectCallback(selectedTargetFolderId);
-    folderSelectCallback = null;
-  }
-  document.getElementById("folderSelectModal").classList.add("hide");
-}
-document.getElementById("folderSelectCancel").onclick=()=>{
-  if(folderSelectCallback){
-    folderSelectCallback(null);
-    folderSelectCallback = null;
-  }
-  document.getElementById("folderSelectModal").classList.add("hide");
-}
+//保存
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
 
-// 搜索
-document.getElementById("search").oninput=e=>{
-  searchText = e.target.value;
-  render();
-}
-document.getElementById("searchClear").onclick=()=>{
-  document.getElementById("search").value="";
-  searchText = "";
-  render();
-}
-
-//全选
-document.getElementById("selectAll").onclick=async()=>{
-  document.querySelectorAll(".checkbox-item").forEach(cb=>{
-    cb.checked = true;
-    selectedItems.add(cb.closest(".item").dataset.id);
+//文件排序函数
+function sortFiles(fileArr){
+  const key = $("#sortKeySelect").value;
+  const order = $("#sortOrderSelect").value === "asc" ? 1 : -1;
+  return [...fileArr].sort((a,b)=>{
+    if(key==="name") return order * a.name.localeCompare(b.name,"zh-CN");
+    if(key==="size") return order * (a.size - b.size);
+    if(key==="time") return order * (a.time - b.time);
+    if(key==="type") return order * a.type.localeCompare(b.type,"zh-CN");
   })
 }
 
-//批量删除
-document.getElementById("batchDel").onclick=async()=>{
-  for(const id of selectedItems){
-    const f = await getFileById(id);
-    if(f) await delFile(id);
-    else await delFolder(id);
+//主文件列表渲染
+function renderMainFileList(){
+  const wrap = $("#mainFileList");
+  wrap.innerHTML = "";
+  let showFiles = data.files;
+  if(activeFilterFolderId){
+    showFiles = data.files.filter(f=>f.folder === activeFilterFolderId);
   }
-  render();
-}
-async function getFileById(id){
-  return new Promise(res=>{
-    const tx = db.transaction("files");
-    const req = tx.objectStore("files").get(id);
-    req.onsuccess=()=>res(req.result)
+  showFiles = sortFiles(showFiles);
+  showFiles.forEach(f=>{
+    const div = document.createElement("div");
+    div.className = "file-row";
+    div.innerHTML = `<input type="checkbox" data-id="${f.id}"><span>${f.name}</span>`;
+    div.ondblclick = ()=>downloadSingle(f);
+    //长按重命名
+    let longTimer;
+    div.onmousedown = div.ontouchstart = ()=>{
+      longTimer = setTimeout(()=>openRename("file",f),600);
+    }
+    div.onmouseup = div.ontouchend = ()=>clearTimeout(longTimer);
+    wrap.appendChild(div);
   })
 }
-async function getFolderById(id){
-  return new Promise(res=>{
-    const tx = db.transaction("folders");
-    const req = tx.objectStore("folders").get(id);
-    req.onsuccess=()=>res(req.result)
-  })
+
+//单文件下载
+function downloadSingle(file){
+  const a = document.createElement("a");
+  a.href = file.data;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 //批量下载
-document.getElementById("batchDownload").onclick=async()=>{
-  const zip = new JSZip();
-  async function addItemToZip(itemId, zipFolder){
-    const file = await getFileById(itemId);
-    if(file){
-      zipFolder.file(file.name, file.blob);
-      return;
-    }
-    const folder = await getFolderById(itemId);
-    if(!folder) return;
-    const subZip = zipFolder.folder(folder.name);
-    const subFiles = await getFilesByParent(folder.id);
-    const subFolders = await getFoldersByParent(folder.id);
-    for(const sf of subFiles) subZip.file(sf.name, sf.blob);
-    for(const sfd of subFolders) await addItemToZip(sfd.id, subZip);
-  }
-  for(const id of selectedItems){
-    await addItemToZip(id, zip);
-  }
-  const blob = await zip.generateAsync({type:"blob"});
-  saveAs(blob,"批量文件.zip");
+function batchDownload(){
+  const ids = Array.from($$("#mainFileList input:checked")).map(c=>c.dataset.id);
+  const list = data.files.filter(f=>ids.includes(f.id));
+  list.forEach(f=>downloadSingle(f));
+}
+$("#batchDownloadBtn").onclick = batchDownload;
+
+//指令输入
+$("#cmdInput").onkeydown = e=>{
+  if(e.key!=="Enter")return;
+  const val = $("#cmdInput").value.trim().toLowerCase();
+  if(["download","dl","下载"].includes(val)) batchDownload();
+  $("#cmdInput").value = "";
 }
 
-//批量移动，弹窗树形选择文件夹（修复原来失效问题）
-document.getElementById("batchMove").onclick=async()=>{
-  document.getElementById("folderSelectTitle").innerText = "批量移动至";
-  document.getElementById("folderSelectModal").classList.remove("hide");
-  selectedTargetFolderId = null;
-  await renderModalTree();
-  folderSelectCallback = async (targetId)=>{
-    if(!targetId) return;
-    for(const id of selectedItems){
-      const f = await getFileById(id);
-      if(f){
-        f.parentId = targetId;
-        await updateFile(f);
-      }else{
-        const fd = await getFolderById(id);
-        if(fd) {
-          fd.parentId = targetId;
-          await updateFolder(fd);
-        }
-      }
-    }
-    render();
+//全选
+$("#selectAllBtn").onclick = ()=>{
+  const checks = $$("#mainFileList input[type=checkbox]");
+  const allChecked = Array.from(checks).every(c=>c.checked);
+  checks.forEach(c=>c.checked = !allChecked);
+}
+
+//批量删除
+$("#batchDelBtn").onclick = ()=>{
+  const ids = Array.from($$("#mainFileList input:checked")).map(c=>c.dataset.id);
+  data.files = data.files.filter(f=>!ids.includes(f.id));
+  saveData();renderMainFileList();renderSideFolder();
+}
+
+//批量移动弹窗
+$("#batchMoveBtn").onclick = ()=>{
+  const ids = Array.from($$("#mainFileList input:checked")).map(c=>c.dataset.id);
+  if(!ids.length) return alert("勾选文件");
+  selectedFolderModal=null;
+  renderModalFolderList();
+  $("#folderSelectModal").classList.add("open");
+  $("#modalConfirm").onclick = ()=>{
+    if(!selectedFolderModal) return;
+    $("#folderSelectModal").classList.remove("open");
+    data.files.forEach(f=>{if(ids.includes(f.id))f.folder = selectedFolderModal.id;})
+    saveData();renderMainFileList();renderSideFolder();
   }
 }
 
 //新建文件夹
-document.getElementById("newFolder").onclick=async()=>{
-  const name = prompt("新建文件夹名称");
-  if(!name) return;
-  const pid = currentPath.at(-1);
-  await addFolder({id:uuid(),name:name,parentId:pid,system:false});
-  render();
-}
-document.getElementById("sidebarNewFolder").onclick=async()=>{
-  const name = prompt("新建文件夹名称");
-  if(!name) return;
-  const pid = currentPath.at(-1);
-  await addFolder({id:uuid(),name:name,parentId:pid,system:false});
-  render();
+$("#newFolderBtn").onclick = ()=>{
+  const name = prompt("文件夹名称");
+  if(!name)return;
+  const id = "fd_"+Date.now();
+  data.folders.push({id,name,expand:true});
+  saveData();renderSideFolder();
 }
 
-init();
+function renderSideFolder(){
+  const wrap = $("#folderListSide");
+  wrap.innerHTML = "";
+  data.folders.forEach(fd=>{
+    const divFolder = document.createElement("div");
+    divFolder.className = "folder-item";
+    divFolder.textContent = "📂 "+fd.name;
+    //长按文件夹重命名
+    let longTimer;
+    divFolder.onmousedown = divFolder.ontouchstart = ()=>{
+      longTimer = setTimeout(()=>openRename("folder",fd),600);
+    }
+    divFolder.onmouseup = divFolder.ontouchend = ()=>clearTimeout(longTimer);
+    //点击文字展开/收起，切换筛选
+    divFolder.onclick = ()=>{
+      fd.expand = !fd.expand;
+      activeFilterFolderId = fd.id;
+      renderMainFileList();
+      renderSideFolder();
+    }
+    wrap.appendChild(divFolder);
+    //展开子文件，同样应用排序
+    if(fd.expand){
+      const subWrap = document.createElement("div");
+      subWrap.className = "sub-file-list";
+      let filesInFolder = data.files.filter(f=>f.folder === fd.id);
+      filesInFolder = sortFiles(filesInFolder);
+      filesInFolder.forEach(file=>{
+        const fileItem = document.createElement("div");
+        fileItem.className = "sub-file-item";
+        fileItem.textContent = "├ "+file.name;
+        subWrap.appendChild(fileItem);
+      })
+      wrap.appendChild(subWrap);
+    }
+  })
+}
+
+//重命名
+function openRename(type,obj){
+  renameTarget = {type,obj};
+  $("#renameInp").value = obj.name;
+  $("#renameModal").classList.add("open");
+}
+$("#renameCancel").onclick = ()=>{$("#renameModal").classList.remove("open");renameTarget=null;}
+$("#renameOk").onclick = ()=>{
+  const newname = $("#renameInp").value.trim();
+  if(!newname) return;
+  renameTarget.obj.name = newname;
+  saveData();renderSideFolder();renderMainFileList();
+  $("#renameModal").classList.remove("open");
+}
+
+//导入导出
+$("#exportBtn").onclick = ()=>{
+  const json = JSON.stringify(data,null,2);
+  const blob = new Blob([json],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "file_backup.json";
+  a.click();
+}
+$("#importBtn").onclick = ()=>$("#importFile").click();
+$("#importFile").onchange = e=>{
+  const fr = new FileReader();
+  fr.onload = ev=>{
+    try{
+      data=JSON.parse(ev.target.result);
+      saveData();
+      renderSideFolder();
+      renderMainFileList();
+      alert("导入成功");
+    }catch(err){alert("备份文件错误");}
+  }
+  fr.readAsText(e.target.files[0])
+}
+
+//初始化
+renderPendingList();
+renderSideFolder();
+renderMainFileList();
 </script>
 </body>
 </html>
